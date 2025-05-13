@@ -27,17 +27,17 @@ class UnifiedPushRegistrationFailed implements Exception {
   const UnifiedPushRegistrationFailed({required this.reason});
 }
 
-class UnifiedpushLinux extends UnifiedPushPlatform {
+class UnifiedPushLinux extends UnifiedPushPlatform {
   final DBusClient _dbusClient;
   OrgUnifiedpushDistributor2? _distributor;
   OrgUnifiedpushConnector2? _connector;
   String? _instance;
   String? _dbusName;
 
-  UnifiedpushLinux() : _dbusClient = DBusClient.session();
+  UnifiedPushLinux() : _dbusClient = DBusClient.session();
 
   static void registerWith() {
-    UnifiedPushPlatform.instance = UnifiedpushLinux();
+    UnifiedPushPlatform.instance = UnifiedPushLinux();
   }
 
   @override
@@ -66,9 +66,8 @@ class UnifiedpushLinux extends UnifiedPushPlatform {
     String? messageForDistributor,
     String? vapid,
   ) async {
-    assert(_dbusName != null, "The DBus name should be set");
-    assert(_dbusName!.split(".").length >= 3,
-        "The DBus name should be a fully-qualified name (e.g. com.example.App)");
+    assert(_dbusName != null,
+        "DBus name not set, setDBusName must be called before register");
 
     var distributor = await getDistributor();
     if (distributor == null || _connector == null) return;
@@ -157,7 +156,10 @@ class UnifiedpushLinux extends UnifiedPushPlatform {
   }
 
   @override
-  void setDBusName(String name) {
+  void setDBusName(String? name) {
+    assert(name != null, "The DBus name should be set");
+    assert(name!.split(".").length >= 3,
+        "The DBus name should be a fully-qualified name (e.g. com.example.App)");
     _dbusName = name;
   }
 }
