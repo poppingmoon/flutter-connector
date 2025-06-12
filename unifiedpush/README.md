@@ -77,12 +77,50 @@ A registration can be canceled with `UnifiedPush.unregister`.
 
 ## Embed a distributor
 
-On Android, this is possible to embed a distributor that will register to the Google play services directly. For more information refer to <https://unifiedpush.org/kdoc/embedded_fcm_distributor/>.
+On Android, this is possible to embed a distributor that will register to the Google play services directly. You will need to update the Android side of your flutter project. For more information refer to <https://unifiedpush.org/kdoc/embedded_fcm_distributor/>.
 
 ## Send push messages
 
-You can then send web push messages to your applications. The messages need to be encrypted. The required information them are retrieved onNewEndpoint: [PushEndpoint.pubKeySet]
+You can then send web push messages to your applications. Web push is defined by 3 RFC: [RFC8030](https://www.rfc-editor.org/rfc/rfc8030) defines the content of the http request used to push a message, [RFC8291](https://www.rfc-editor.org/rfc/rfc8291) defines the (required) encryption of the push messages, and [RFC8292](https://www.rfc-editor.org/rfc/rfc8292) defines the authorization used to control the sender of push messages, this authoization is known as VAPID and is optional with most distributors, required by others.
+
+When the application receives a new endpoint, it comes with information used by the server to encrypt notifications too: [PushEndpoint.pubKeySet].
+
+The application automatically decrypt incoming notifications. When onNewMessage is called, [PushMessage.content] contains the decrypted content of the push notification. If it wasn't possible to correctly decrypt it, [PushMessage.decrypted] is false, and [PushMessage.content] contains the encrypted content of push notifications.
 
 ## Example
 
 An example app can be found on the [repository](https://codeberg.org/UnifiedPush/flutter-connector/src/branch/main/example).
+
+## Troubleshooting
+
+### The build fails because of duplicate classes
+
+An error is thrown during build about duplicate classes, _related to tink_:
+
+```
+> A failure occurred while executing com.android.build.gradle.internal.tasks.CheckDuplicatesRunnable
+   > Duplicate class com.google.crypto.tink.AccessesPartialKey found in modules tink-1.16.0.jar -> jetified-tink-1.16.0 (com.google.crypto.tink:tink:1.16.0) and tink-android-1.9.0.jar -> jetified-tink-android-1.9.0 (com.google.crypto.tink:tink-android:1.9.0)
+     Duplicate class com.google.crypto.tink.Aead found in modules tink-1.16.0.jar -> jetified-tink-1.16.0 (com.google.crypto.tink:tink:1.16.0) and tink-android-1.9.0.jar -> jetified-tink-android-1.9.0 (com.google.crypto.tink:tink-android:1.9.0)
+     Duplicate class com.google.crypto.tink.BinaryKeysetReader found in modules tink-1.16.0.jar -> jetified-tink-1.16.0 (com.google.crypto.tink:tink:1.16.0) and tink-android-1.9.0.jar -> jetified-tink-android-1.9.0 (com.google.crypto.tink:tink-android:1.9.0)
+    [...]
+```
+
+This is due to another library using another version of _tink_.
+
+To resolve the issue, edit _android/app/build.gradle.kts_, and add, after the `plugins` section:
+
+```kotlin
+configurations.all {
+    // Use the latest version published: https://central.sonatype.com/artifact/com.google.crypto.tink/tink-android
+    val tink = "com.google.crypto.tink:tink-android:1.17.0"
+    // You can also use the library declaration catalog
+    // val tink = libs.google.tink
+    resolutionStrategy {
+        force(tink)
+        dependencySubstitution {
+            substitute(module("com.google.crypto.tink:tink")).using(module(tink))
+        }
+    }
+}
+
+```
