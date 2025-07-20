@@ -18,7 +18,6 @@ UnifiedPush.initialize(
 
 void onNewEndpoint(PushEndpoint endpoint, String instance) {
   // You should send the endpoint to your application server
-  // and sync for missing notifications.
 }
 
 void onRegistrationFailed(FailedReason reason, String instance) {}
