@@ -35,8 +35,6 @@ android {
 
     kotlinOptions {
         jvmTarget = '1.8'
-        // languageVersion provides source compatibility with the specified version of Kotlin
-        languageVersion = '1.7'
     }
 
     sourceSets {
