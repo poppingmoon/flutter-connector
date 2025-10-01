@@ -526,7 +526,7 @@ packages:
     source: hosted
     version: "0.9.4"
   typed_data:
-    dependency: "direct main"
+    dependency: transitive
     description:
       name: typed_data
       sha256: f9049c039ebfeb4cf7a7104a675823cd72dba8297f264b6637062516699fa006
@@ -560,7 +560,7 @@ packages:
       path: "../unifiedpush_platform_interface"
       relative: true
     source: path
-    version: "3.0.1"
+    version: "3.1.0"
   unifiedpush_ui:
     dependency: "direct main"
     description:

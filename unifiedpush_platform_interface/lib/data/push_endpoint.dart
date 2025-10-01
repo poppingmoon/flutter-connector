@@ -6,5 +6,7 @@ class PushEndpoint {
   final String url;
   /// Web Push public key set.
   final PublicKeySet? pubKeySet;
-  PushEndpoint(this.url, this.pubKeySet);
+  /// This endpoint is comes from a fallback distributor and should change soon
+  final bool temporary;
+  PushEndpoint(this.url, this.pubKeySet, {this.temporary = false});
 }
