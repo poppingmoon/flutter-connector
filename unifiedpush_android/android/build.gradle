@@ -12,7 +12,7 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:8.5.2'
+        classpath 'com.android.tools.build:gradle:8.13.0'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
     }
 }
@@ -29,7 +29,7 @@ apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 
 android {
-    compileSdk 35
+    compileSdk = 36
 
     compileOptions{
         sourceCompatibility = JavaVersion.VERSION_1_8
@@ -60,6 +60,6 @@ dependencies {
     api 'org.unifiedpush.android:connector:3.1.0'
     // stick with 2.6.1 for now,
     // 2.7.x minSdk=19
-    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.6.2'
+    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.6.1'
     // implementation files("../../../flutter/bin/cache/artifacts/engine/android-x64/flutter.jar")
 }
