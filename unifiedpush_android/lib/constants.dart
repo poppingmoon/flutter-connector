@@ -6,6 +6,7 @@ const pluginArgInstance = "instance";
 const pluginArgEndpointUrl = "endpoint.url";
 const pluginArgEndpointKeyPubKey = "endpoint.keyset.pubkey";
 const pluginArgEndpointKeyAuth = "endpoint.keyset.auth";
+const pluginArgEndpointTemp = "endpoint.temporary";
 const pluginArgReason = "reason";
 const pluginArgMessageContent = "message.content";
 const pluginArgMessageDecrypted = "message.decrypted";

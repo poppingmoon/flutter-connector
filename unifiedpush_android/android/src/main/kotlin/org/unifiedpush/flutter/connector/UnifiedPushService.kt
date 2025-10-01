@@ -80,7 +80,8 @@ open class UnifiedPushService: PushService() {
             PLUGIN_ARG_INSTANCE to instance,
             PLUGIN_ARG_ENDPOINT_URL to endpoint.url,
             PLUGIN_ARG_ENDPOINT_KEY_PUBKEY to endpoint.pubKeySet?.pubKey,
-            PLUGIN_ARG_ENDPOINT_KEY_AUTH to endpoint.pubKeySet?.auth
+            PLUGIN_ARG_ENDPOINT_KEY_AUTH to endpoint.pubKeySet?.auth,
+            PLUGIN_ARG_ENDPOINT_TEMP to endpoint.temporary
         )
         CoroutineScope(dispatcher).launch {
             Plugin.calls?.emit(Call(PLUGIN_CALL_NEW_ENDPOINT, data))
