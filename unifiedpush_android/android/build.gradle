@@ -1,8 +1,11 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
+
 group 'org.unifiedpush.flutter.connector'
 version '1.0-SNAPSHOT'
 
 buildscript {
-    ext.kotlin_version = '2.1.0'
+    ext.kotlin_version = '2.2.10'
     repositories {
         google()
         mavenCentral()
@@ -29,14 +32,17 @@ android {
     compileSdk 35
 
     compileOptions{
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
     }
-
-    kotlinOptions {
-        jvmTarget = '1.8'
-        // languageVersion provides source compatibility with the specified version of Kotlin
-        languageVersion = '1.7'
+    kotlin {
+        compilerOptions {
+            jvmTarget.set(JvmTarget.JVM_1_8)
+            // languageVersion provides source compatibility with the specified version of Kotlin
+            // By default it uses $kotlinVersion (2.2)
+            // We set it to the lowest non-deprecated value
+            languageVersion.set(KotlinVersion.KOTLIN_2_0)
+        }
     }
 
     sourceSets {
