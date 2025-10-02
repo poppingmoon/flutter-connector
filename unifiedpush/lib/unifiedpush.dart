@@ -49,6 +49,14 @@ class UnifiedPush {
   /// Returns `Future<true>` if a distributor is already registered,
   /// `Future<false>` else;
   ///
+  /// - [onNewEndpoint] Invoked when a new endpoint is to be used for sending push messages
+  /// - [onRegistrationFailed] Invoked when the registration is not possible, eg. no network,
+  ///   depending on the reason, you can try to register again directly.
+  /// - [onUnregistered] Invoked when this registration is unregistered by the distributor and
+  ///   won't receive push messages anymore
+  /// - [onMessage] Invoked when a new message is received
+  /// - [onTempUnavailable] Invoked when the distributor backend is temporary unavailable.
+  ///
   /// You can ignore instances if you don't use them.
   static Future<bool> initialize({
     void Function(PushEndpoint endpoint, String instance)? onNewEndpoint,
