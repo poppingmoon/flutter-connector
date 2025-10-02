@@ -1,5 +1,6 @@
 ## 3.1.0
 * Add PushEndpoint.temporary, to be able to ignore new endpoint from fallback distributors, when the primary distrib is down
+* Add optional initializeOnTempUnavailable function
 
 ## 3.0.1
 

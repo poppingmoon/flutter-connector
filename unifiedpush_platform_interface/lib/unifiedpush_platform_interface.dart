@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 import 'package:unifiedpush_platform_interface/data/failed_reason.dart';
 import 'package:unifiedpush_platform_interface/data/push_endpoint.dart';
@@ -72,6 +73,15 @@ abstract class UnifiedPushPlatform extends PlatformInterface {
     void Function(PushMessage message, String instance)? onMessage,
   }) {
     throw UnimplementedError('initializeCallback has not been implemented.');
+  }
+
+  /// Register optional callback for onTempUnavailable
+  /// This event is sent by the distributor if the push server is down
+  Future<void> initializeOnTempUnavailable({
+    void Function(String instance)? onTempUnavailable,
+  }) {
+    debugPrint('Optional initializeOnTempUnavailable has not been implemented.');
+    return Future.value();
   }
 
   /// Set the name the application will register with on the DBus session bus.
