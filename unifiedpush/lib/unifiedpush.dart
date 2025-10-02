@@ -55,6 +55,7 @@ class UnifiedPush {
     void Function(FailedReason reason, String instance)? onRegistrationFailed,
     void Function(String instance)? onUnregistered,
     void Function(PushMessage message, String instance)? onMessage,
+    void Function(String instance)? onTempUnavailable,
     String? linuxDBusName,
   }) async {
     if (Platform.isLinux) {
@@ -67,6 +68,9 @@ class UnifiedPush {
             onRegistrationFailed?.call(r, i),
         onUnregistered: (String i) async => onUnregistered?.call(i),
         onMessage: (PushMessage m, String i) async => onMessage?.call(m, i));
+    await UnifiedPushPlatform.instance.initializeOnTempUnavailable(
+        onTempUnavailable: (String i) async => onTempUnavailable?.call(i)
+    );
     return await UnifiedPush.getDistributor() != null;
   }
 
