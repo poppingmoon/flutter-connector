@@ -1,6 +1,6 @@
 name: unifiedpush_android
 description: Android implementation of UnifiedPush plugin.
-version: 3.1.1
+version: 3.2.0
 homepage: "https://unifiedpush.org/developers/flutter"
 documentation: "https://unifiedpush.org/developers/flutter"
 repository: https://codeberg.org/UnifiedPush/flutter-connector/src/branch/main/unifiedpush_android
@@ -29,6 +29,6 @@ flutter:
         pluginClass: Plugin
         dartPluginClass: UnifiedPushAndroid
 
-#todev#dependency_overrides:
-#todev#  unifiedpush_platform_interface:
-#todev#    path: ../unifiedpush_platform_interface
+dependency_overrides:
+  unifiedpush_platform_interface:
+    path: ../unifiedpush_platform_interface

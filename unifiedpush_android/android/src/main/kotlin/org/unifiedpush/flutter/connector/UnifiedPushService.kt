@@ -110,6 +110,15 @@ open class UnifiedPushService: PushService() {
         }
     }
 
+    override fun onTempUnavailable(instance: String) {
+        Log.d(TAG, "onTempUnavailable")
+        val data = mapOf(PLUGIN_ARG_INSTANCE to instance)
+        CoroutineScope(dispatcher).launch {
+            Plugin.calls?.emit(Call(PLUGIN_CALL_TEMP_UNAVAILABLE, data))
+            coroutineContext.cancel()
+        }
+    }
+
     internal companion object {
         private const val TAG = "UnifiedPushService"
     }

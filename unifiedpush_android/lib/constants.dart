@@ -2,6 +2,7 @@ const pluginCallNewEndpoint = "onNewEndpoint";
 const pluginCallMessage = "onMessage";
 const pluginCallRegistrationFailed = "onRegistrationFailed";
 const pluginCallUnregistered = "onUnregistered";
+const pluginCallTempUnavailable = "onTempUnavailable";
 const pluginArgInstance = "instance";
 const pluginArgEndpointUrl = "endpoint.url";
 const pluginArgEndpointKeyPubKey = "endpoint.keyset.pubkey";
