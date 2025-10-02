@@ -77,9 +77,9 @@ abstract class UnifiedPushPlatform extends PlatformInterface {
 
   /// Register optional callback for onTempUnavailable
   /// This event is sent by the distributor if the push server is down
-  Future<void> initializeOnTempUnavailable({
+  Future<void> initializeOnTempUnavailable(
     void Function(String instance)? onTempUnavailable,
-  }) {
+  ) {
     debugPrint('Optional initializeOnTempUnavailable has not been implemented.');
     return Future.value();
   }
