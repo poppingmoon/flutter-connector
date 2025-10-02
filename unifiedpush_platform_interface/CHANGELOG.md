@@ -1,3 +1,6 @@
+## 3.1.0
+* Add PushEndpoint.temporary, to be able to ignore new endpoint from fallback distributors, when the primary distrib is down
+
 ## 3.0.1
 
 **Breaking**:
