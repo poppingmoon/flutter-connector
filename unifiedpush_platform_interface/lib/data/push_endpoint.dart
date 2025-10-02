@@ -7,6 +7,8 @@ class PushEndpoint {
   /// Web Push public key set.
   final PublicKeySet? pubKeySet;
   /// This endpoint is comes from a fallback distributor and should change soon
+  ///
+  /// Since unifiedpush_platform_interface: 3.1.0
   final bool temporary;
   PushEndpoint(this.url, this.pubKeySet, {this.temporary = false});
 }
