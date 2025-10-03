@@ -1,3 +1,10 @@
+## 3.2.0
+* Bump android-connector to 3.1.0:
+    * Follow specifications AND_3.1.0, with migration and temp unavailibility
+    * https://codeberg.org/UnifiedPush/android-connector/releases/tag/3.1.0
+* Compile with SDK 36
+* Bump dependencies
+
 ## 3.1.1
 * Fix events with updated Plugin
 * Bump android-connector to 3.0.10:
