@@ -77,7 +77,7 @@ class UnifiedPush {
         onUnregistered: (String i) async => onUnregistered?.call(i),
         onMessage: (PushMessage m, String i) async => onMessage?.call(m, i));
     await UnifiedPushPlatform.instance.initializeOnTempUnavailable(
-        onTempUnavailable: (String i) async => onTempUnavailable?.call(i)
+        (String i) async => onTempUnavailable?.call(i)
     );
     return await UnifiedPush.getDistributor() != null;
   }

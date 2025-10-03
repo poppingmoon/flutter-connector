@@ -101,6 +101,7 @@ class UnifiedPushAndroid extends UnifiedPushPlatform {
     void Function(String instance)? onTempUnavailable,
   ) {
     _onTempUnavailable = onTempUnavailable;
+    return Future.value();
   }
 
 
