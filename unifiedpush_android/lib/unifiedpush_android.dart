@@ -130,7 +130,7 @@ class UnifiedPushAndroid extends UnifiedPushPlatform {
           pubKeySet = PublicKeySet(pubKey, auth);
         }
         final temp = call.arguments[pluginArgEndpointTemp] as bool;
-        _onNewEndpoint?.call(PushEndpoint(url, pubKeySet), instance);
+        _onNewEndpoint?.call(PushEndpoint(url, pubKeySet, temporary: temp), instance);
         break;
       case "onRegistrationFailed":
         final reason = failedReasonFromString(call.arguments[pluginArgReason]);
