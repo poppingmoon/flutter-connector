@@ -1,3 +1,6 @@
+## 6.1.0
+* Add support for onTempUnavailable
+
 ## 6.0.2
 * Essentially to update the doc
 * Require unifiedpush_android ^3.1.0
