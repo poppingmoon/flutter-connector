@@ -101,7 +101,7 @@ class MyAppState extends State<MyApp> {
     registered = true;
     endpoint = nEndpoint;
     setState(() {
-      debugPrint("Endpoint: ${endpoint.url}, temporary: ${endpoint.temporary}");
+      debugPrint("Endpoint (temp=${endpoint.temporary}): ${endpoint.url}");
       debugPrint(
           "To test: https://unifiedpush.org/test_wp.html#endpoint=${endpoint.url}&p256dh=${endpoint.pubKeySet?.pubKey}&auth=${endpoint.pubKeySet?.auth}");
     });
