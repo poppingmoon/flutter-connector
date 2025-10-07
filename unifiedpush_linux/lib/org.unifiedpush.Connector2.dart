@@ -16,7 +16,7 @@ class OrgUnifiedpushConnector2 extends DBusObject {
 
   /// Creates a new object to expose on [path].
   OrgUnifiedpushConnector2({
-    DBusObjectPath path = const DBusObjectPath.unchecked('/'),
+    DBusObjectPath path = const DBusObjectPath.unchecked('/org/unifiedpush/Connector'),
   }) : super(path);
 
   Future<void> initializeCallback({
