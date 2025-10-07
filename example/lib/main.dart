@@ -197,80 +197,84 @@ class _HomePageState extends State<HomePage> {
         title: const Text('Unifiedpush Example'),
       ),
       body: Center(
-        child: Column(
-          children: [
-            ElevatedButton(
-              child: Text(registered ? 'Re-register' : "Register"),
-              onPressed: () async {
-                if (registered) {
-                  UPFunctions().registerApp(localInstance);
-                } else {
-                  /**
-                   * Registration
-                   * Option 1:  Use the default distributor picker
-                   *            which uses a dialog
-                   */
-                  registerWithDefault(
-                    UnifiedPushUi(
-                      context,
-                      [localInstance],
-                      UPFunctions(),
-                    ),
-                  );
+        child:Padding(
+        padding: EdgeInsets.symmetric(horizontal: 20.0),
+          child: Column(
+            spacing: 10,
+            children: [
+              ElevatedButton(
+                child: Text(registered ? 'Re-register' : "Register"),
+                onPressed: () async {
+                  if (registered) {
+                    UPFunctions().registerApp(localInstance);
+                  } else {
+                    /**
+                     * Registration
+                     * Option 1:  Use the default distributor picker
+                     *            which uses a dialog
+                     */
+                    registerWithDefault(
+                      UnifiedPushUi(
+                        context,
+                        [localInstance],
+                        UPFunctions(),
+                      ),
+                    );
 
-                  /**
-                   * Registration
-                   * Option 2: Do your own function to pick the distrib
-                   */
-                  /*
-                    if (await UnifiedPush.tryUseCurrentOrDefaultDistributor()) {
-                      UnifiedPush.registerApp(instance);
-                    } else {
-                      final distributors = await UnifiedPush.getDistributors();
-                      if (distributors.length == 0) {
-                        return;
+                    /**
+                     * Registration
+                     * Option 2: Do your own function to pick the distrib
+                     */
+                    /*
+                      if (await UnifiedPush.tryUseCurrentOrDefaultDistributor()) {
+                        UnifiedPush.registerApp(instance);
+                      } else {
+                        final distributors = await UnifiedPush.getDistributors();
+                        if (distributors.length == 0) {
+                          return;
+                        }
+                        final distributor = myPickerFunc(distributors);
+                        UnifiedPush.saveDistributor(distributor);
+                        UnifiedPush.registerApp(instance);
                       }
-                      final distributor = myPickerFunc(distributors);
-                      UnifiedPush.saveDistributor(distributor);
-                      UnifiedPush.registerApp(instance);
-                    }
-                  */
-                }
-              },
-            ),
-            if (registered) ...[
-              ElevatedButton(
-                  child: Text("Unregister"),
-                  onPressed: () async {
-                    UnifiedPush.unregister(localInstance);
-                    registered = false;
-                    widget.onPressed();
-                  }),
-              SelectableText("Endpoint: ${endpoint.url}"),
-              if (key != null) ...[
-                SelectableText("P256dh: ${key.pubKey}"),
-                SelectableText("Auth: ${key.auth}"),
+                    */
+                  }
+                },
+              ),
+              if (registered) ...[
+                ElevatedButton(
+                    child: Text("Unregister"),
+                    onPressed: () async {
+                      UnifiedPush.unregister(localInstance);
+                      registered = false;
+                      widget.onPressed();
+                    }),
+                SelectableText("Endpoint: ${endpoint.url}"),
+                if (key != null) ...[
+                  SelectableText("P256dh: ${key.pubKey}"),
+                  SelectableText("Auth: ${key.auth}"),
+                ],
+                ElevatedButton(
+                  onPressed: notify,
+                  child: const Text("Notify"),
+                ),
+                TextField(
+                  controller: title,
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    hintText: 'Enter a title',
+                  ),
+                ),
+                TextField(
+                  controller: message,
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    hintText: 'Enter a body',
+                  ),
+                ),
               ],
-              ElevatedButton(
-                onPressed: notify,
-                child: const Text("Notify"),
-              ),
-              TextField(
-                controller: title,
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                  hintText: 'Enter a title',
-                ),
-              ),
-              TextField(
-                controller: message,
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                  hintText: 'Enter a body',
-                ),
-              ),
             ],
-          ],
+          ),
         ),
       ),
     );
