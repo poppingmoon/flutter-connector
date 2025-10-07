@@ -189,6 +189,43 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
+  void register() async {
+    if (registered) {
+      UPFunctions().registerApp(localInstance);
+    } else {
+      /**
+       * Registration
+       * Option 1:  Use the default distributor picker
+       *            which uses a dialog
+       */
+      registerWithDefault(
+        UnifiedPushUi(
+          context,
+          [localInstance],
+          UPFunctions(),
+        ),
+      );
+
+      /**
+       * Registration
+       * Option 2: Do your own function to pick the distrib
+       */
+      /*
+      if (await UnifiedPush.tryUseCurrentOrDefaultDistributor()) {
+        UnifiedPush.registerApp(instance);
+      } else {
+        final distributors = await UnifiedPush.getDistributors();
+        if (distributors.length == 0) {
+          return;
+        }
+        final distributor = myPickerFunc(distributors);
+        UnifiedPush.saveDistributor(distributor);
+        UnifiedPush.registerApp(instance);
+      }
+    */
+    }
+  }
+
   Widget linkTo(BuildContext context, String url) {
     return InkWell(
       onTap: () => launchUrl(Uri.parse(url)),
@@ -230,42 +267,7 @@ class _HomePageState extends State<HomePage> {
             children: [
               ElevatedButton(
                 child: Text(registered ? 'Re-register' : "Register"),
-                onPressed: () async {
-                  if (registered) {
-                    UPFunctions().registerApp(localInstance);
-                  } else {
-                    /**
-                     * Registration
-                     * Option 1:  Use the default distributor picker
-                     *            which uses a dialog
-                     */
-                    registerWithDefault(
-                      UnifiedPushUi(
-                        context,
-                        [localInstance],
-                        UPFunctions(),
-                      ),
-                    );
-
-                    /**
-                     * Registration
-                     * Option 2: Do your own function to pick the distrib
-                     */
-                    /*
-                      if (await UnifiedPush.tryUseCurrentOrDefaultDistributor()) {
-                        UnifiedPush.registerApp(instance);
-                      } else {
-                        final distributors = await UnifiedPush.getDistributors();
-                        if (distributors.length == 0) {
-                          return;
-                        }
-                        final distributor = myPickerFunc(distributors);
-                        UnifiedPush.saveDistributor(distributor);
-                        UnifiedPush.registerApp(instance);
-                      }
-                    */
-                  }
-                },
+                onPressed: () => register(),
               ),
               if (registered) ...[
                 ElevatedButton(
