@@ -2,9 +2,11 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:unifiedpush/unifiedpush.dart';
 import 'package:unifiedpush_ui/unifiedpush_ui.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'notification_utils.dart';
@@ -102,8 +104,7 @@ class MyAppState extends State<MyApp> {
     endpoint = nEndpoint;
     setState(() {
       debugPrint("Endpoint (temp=${endpoint.temporary}): ${endpoint.url}");
-      debugPrint(
-          "To test: https://unifiedpush.org/test_wp.html#endpoint=${endpoint.url}&p256dh=${endpoint.pubKeySet?.pubKey}&auth=${endpoint.pubKeySet?.auth}");
+      debugPrint("To test: ${testPage(endpoint)}");
     });
   }
 
@@ -188,6 +189,31 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
+  Widget linkTo(BuildContext context, String url) {
+    return InkWell(
+      onTap: () => launchUrl(Uri.parse(url)),
+      onLongPress: () {
+        Clipboard.setData(ClipboardData(text: url));
+        showToast(context, "URL Copied");
+      },
+      child: Text(
+        url,
+        style: const TextStyle(
+            decoration: TextDecoration.underline, color: Colors.blue),
+      ),
+    );
+  }
+
+  void showToast(BuildContext context, String text) {
+    final scaffold = ScaffoldMessenger.of(context);
+    scaffold.showSnackBar(
+      SnackBar(
+        content: Text(text),
+        duration: const Duration(seconds: 1),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final key = endpoint.pubKeySet;
@@ -197,8 +223,8 @@ class _HomePageState extends State<HomePage> {
         title: const Text('Unifiedpush Example'),
       ),
       body: Center(
-        child:Padding(
-        padding: EdgeInsets.symmetric(horizontal: 20.0),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20.0),
           child: Column(
             spacing: 10,
             children: [
@@ -243,16 +269,17 @@ class _HomePageState extends State<HomePage> {
               ),
               if (registered) ...[
                 ElevatedButton(
-                    child: Text("Unregister"),
+                    child: const Text("Unregister"),
                     onPressed: () async {
                       UnifiedPush.unregister(localInstance);
                       registered = false;
                       widget.onPressed();
                     }),
-                SelectableText("Endpoint: ${endpoint.url}"),
+                if (key == null) ...[
+                  SelectableText("Endpoint: ${endpoint.url}"),
+                ],
                 if (key != null) ...[
-                  SelectableText("P256dh: ${key.pubKey}"),
-                  SelectableText("Auth: ${key.auth}"),
+                  linkTo(context, testPage(endpoint)),
                 ],
                 ElevatedButton(
                   onPressed: notify,
@@ -279,4 +306,8 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
+}
+
+String testPage(PushEndpoint endpoint) {
+  return "https://unifiedpush.org/test_wp.html#endpoint=${endpoint.url}&p256dh=${endpoint.pubKeySet?.pubKey}&auth=${endpoint.pubKeySet?.auth}";
 }
