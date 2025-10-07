@@ -66,7 +66,8 @@ class UnifiedPushLinux extends UnifiedPushPlatform {
     String? messageForDistributor,
     String? vapid,
   ) async {
-    assert(_dbusName != null,
+    var dbusName = _dbusName;
+    assert(dbusName != null,
         "DBus name not set, setDBusName must be called before register");
 
     var distributor = await getDistributor();
@@ -87,14 +88,14 @@ class UnifiedPushLinux extends UnifiedPushPlatform {
       DBusObjectPath('/org/unifiedpush/Distributor'),
     );
 
-    await _dbusClient.requestName(_dbusName!);
+    await _dbusClient.requestName(dbusName!);
     if (_connector!.client == null) {
       await _dbusClient.registerObject(_connector!);
     }
 
     var result = await _distributor!.callRegister(
       {
-        "service": DBusString(instance),
+        "service": DBusString(dbusName!),
         "token": DBusString(token),
         if (messageForDistributor != null) ...{
           "description": DBusString(messageForDistributor),
