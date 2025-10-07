@@ -18,6 +18,7 @@ dependencies:
   unifiedpush: ^6.0.0
   unifiedpush_ui: ^0.1.0
   unifiedpush_linux: ^0.1.0
+  unifiedpush_storage_shared_preferences: ^1.0.0
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -80,6 +81,10 @@ dependency_overrides:
     path: ../unifiedpush
   unifiedpush_platform_interface:
     path: ../unifiedpush_platform_interface
+  unifiedpush_storage_interface:
+    path: ../unifiedpush_storage_interface
+  unifiedpush_storage_shared_preferences:
+    path: ../unifiedpush_storage_shared_preferences
   unifiedpush_android:
     path: ../unifiedpush_android
   unifiedpush_linux:

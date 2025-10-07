@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:unifiedpush_storage/storage.dart';
+import 'package:unifiedpush_storage_interface/storage.dart';
 
 import 'dialogs.dart';
 
@@ -15,19 +15,20 @@ class UnifiedPushUi {
   late BuildContext context;
   late List<String> instances;
   late UnifiedPushFunctions unifiedPushFunctions;
+  late UnifiedPushStorage storage;
 
-  UnifiedPushUi(this.context, this.instances, this.unifiedPushFunctions);
+  UnifiedPushUi(
+      this.context, this.instances, this.unifiedPushFunctions, this.storage);
 
   static const noDistribAck = "noDistributorAck";
 
   Future<void> onNoDistributorFound() async {
-    final prefs = await UnifiedPushStorage.getInstance();
     if (!context.mounted) return;
-    if (!(prefs.getBool(noDistribAck) ?? false)) {
+    if (!(await storage.getBool(noDistribAck) ?? false)) {
       return showDialog(
           context: context,
-          builder: noDistributorDialog(onDismissed: () {
-            prefs.setBool(noDistribAck, true);
+          builder: noDistributorDialog(onDismissed: () async {
+            await storage.setBool(noDistribAck, true);
           }));
     }
   }
@@ -68,8 +69,7 @@ class UnifiedPushUi {
     }
   }
 
-  static Future<void> removeNoDistributorDialogACK() async {
-    final prefs = await UnifiedPushStorage.getInstance();
-    prefs.remove(noDistribAck);
+  Future<void> removeNoDistributorDialogACK() async {
+    await storage.remove(noDistribAck);
   }
 }

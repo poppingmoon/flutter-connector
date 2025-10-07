@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:unifiedpush/unifiedpush.dart';
+import 'package:unifiedpush_storage_shared_preferences/storage.dart';
 import 'package:unifiedpush_ui/unifiedpush_ui.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:http/http.dart' as http;
@@ -66,14 +67,16 @@ class MyAppState extends State<MyApp> {
   @override
   void initState() {
     UnifiedPush.initialize(
-      onNewEndpoint:
-          onNewEndpoint, // takes (String endpoint, String instance) in args
-      onRegistrationFailed: onRegistrationFailed, // takes (String instance)
-      onUnregistered: onUnregistered, // takes (String instance)
-      onMessage: UPNotificationUtils
-          .basicOnNotification, // takes (String message, String instance) in args
-      linuxDBusName: linuxAppName,
-    ).then((registered) {
+            onNewEndpoint:
+                onNewEndpoint, // takes (String endpoint, String instance) in args
+            onRegistrationFailed:
+                onRegistrationFailed, // takes (String instance)
+            onUnregistered: onUnregistered, // takes (String instance)
+            onMessage: UPNotificationUtils
+                .basicOnNotification, // takes (String message, String instance) in args
+            linuxDBusName: linuxAppName,
+            storage: UnifiedPushStorageSharedPreferences())
+        .then((registered) {
       if (registered) {
         UnifiedPush.register(
           instance: localInstance,
@@ -199,11 +202,8 @@ class _HomePageState extends State<HomePage> {
        *            which uses a dialog
        */
       registerWithDefault(
-        UnifiedPushUi(
-          context,
-          [localInstance],
-          UPFunctions(),
-        ),
+        UnifiedPushUi(context, [localInstance], UPFunctions(),
+            UnifiedPushStorageSharedPreferences()),
       );
 
       /**

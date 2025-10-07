@@ -6,7 +6,7 @@ import 'package:unifiedpush_platform_interface/data/failed_reason.dart';
 import 'package:unifiedpush_platform_interface/data/push_endpoint.dart';
 import 'package:unifiedpush_platform_interface/data/push_message.dart';
 import 'package:unifiedpush_platform_interface/unifiedpush_platform_interface.dart';
-import 'package:unifiedpush_storage/storage.dart';
+import 'package:unifiedpush_storage_interface/storage.dart';
 import 'package:uuid/v4.dart';
 
 enum RegistrationFailure {
@@ -33,6 +33,7 @@ class UnifiedPushLinux extends UnifiedPushPlatform {
   OrgUnifiedpushConnector2? _connector;
   String? _instance;
   String? _dbusName;
+  UnifiedPushStorage? _storage;
 
   UnifiedPushLinux() : _dbusClient = DBusClient.session();
 
@@ -49,14 +50,14 @@ class UnifiedPushLinux extends UnifiedPushPlatform {
 
   @override
   Future<String?> getDistributor() async {
-    var storage = await UnifiedPushStorage.getInstance();
-    return storage.getString("selected_distributor");
+    return await _getStorage("getDistributor")
+        .getString("selected_distributor");
   }
 
   @override
   Future<void> saveDistributor(String distributor) async {
-    var storage = await UnifiedPushStorage.getInstance();
-    storage.setString("selected_distributor", distributor);
+    await _getStorage("saveDistributor")
+        .setString("selected_distributor", distributor);
   }
 
   @override
@@ -70,14 +71,14 @@ class UnifiedPushLinux extends UnifiedPushPlatform {
     assert(dbusName != null,
         "DBus name not set, setDBusName must be called before register");
 
+    var storage = _getStorage("register");
     var distributor = await getDistributor();
     if (distributor == null || _connector == null) return;
 
-    var storage = await UnifiedPushStorage.getInstance();
-    var token = storage.getString("instance_${instance}_token");
+    var token = await storage.getString("instance_${instance}_token");
     if (token == null) {
       token = const UuidV4().generate();
-      storage.setString("instance_${instance}_token", token);
+      await storage.setString("instance_${instance}_token", token);
     }
 
     _instance = instance;
@@ -126,8 +127,8 @@ class UnifiedPushLinux extends UnifiedPushPlatform {
   Future<void> unregister(String instance) async {
     if (_distributor == null || _connector == null) return;
 
-    var storage = await UnifiedPushStorage.getInstance();
-    var token = storage.getString("instance_${instance}_token");
+    var storage = _getStorage("unregister");
+    var token = await storage.getString("instance_${instance}_token");
     assert(token != null, "You need to call register before unregistering");
 
     await _distributor!.callUnregister({
@@ -162,5 +163,17 @@ class UnifiedPushLinux extends UnifiedPushPlatform {
     assert(name!.split(".").length >= 3,
         "The DBus name should be a fully-qualified name (e.g. com.example.App)");
     _dbusName = name;
+  }
+
+  @override
+  void setStorage(UnifiedPushStorage? storage) {
+    assert(storage != null, "Storage must be set");
+    _storage = storage!;
+  }
+
+  UnifiedPushStorage _getStorage(String function) {
+    var storage = _storage;
+    assert(storage != null, "Storage must be set before calling $function");
+    return storage!;
   }
 }

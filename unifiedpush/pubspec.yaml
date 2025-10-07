@@ -14,6 +14,7 @@ dependencies:
   flutter:
     sdk: flutter
   unifiedpush_platform_interface: ^3.0.0
+  unifiedpush_storage_interface: ^1.0.0
   unifiedpush_android: ^3.1.0
   unifiedpush_linux: ^0.1.0
 
@@ -36,3 +37,5 @@ flutter:
 #todev#    path: ../unifiedpush_android
 #todev#  unifiedpush_linux:
 #todev#    path: ../unifiedpush_linux
+#todev#  unifiedpush_storage_interface:
+#todev#    path: ../unifiedpush_storage_interface

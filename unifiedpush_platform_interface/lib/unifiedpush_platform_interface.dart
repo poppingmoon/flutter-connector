@@ -5,6 +5,7 @@ import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 import 'package:unifiedpush_platform_interface/data/failed_reason.dart';
 import 'package:unifiedpush_platform_interface/data/push_endpoint.dart';
 import 'package:unifiedpush_platform_interface/data/push_message.dart';
+import 'package:unifiedpush_storage_interface/storage.dart';
 
 /// The interface that implementations of unifiedpush must implement.
 abstract class UnifiedPushPlatform extends PlatformInterface {
@@ -80,7 +81,8 @@ abstract class UnifiedPushPlatform extends PlatformInterface {
   Future<void> initializeOnTempUnavailable(
     void Function(String instance)? onTempUnavailable,
   ) {
-    debugPrint('Optional initializeOnTempUnavailable has not been implemented.');
+    debugPrint(
+        'Optional initializeOnTempUnavailable has not been implemented.');
     return Future.value();
   }
 
@@ -88,6 +90,12 @@ abstract class UnifiedPushPlatform extends PlatformInterface {
   /// Required for Linux applications.
   void setDBusName(String? name) {
     throw UnimplementedError('setDBusName has not been implemented.');
+  }
+
+  /// Set the storage interface
+  /// Required for Linux applications.
+  void setStorage(UnifiedPushStorage? storage) {
+    throw UnimplementedError('setStorage has not been implemented.');
   }
 }
 

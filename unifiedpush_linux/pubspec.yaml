@@ -13,7 +13,7 @@ dependencies:
   flutter:
     sdk: flutter
   unifiedpush_platform_interface: ^3.0.0
-  unifiedpush_storage: ^0.1.0
+  unifiedpush_storage_interface: ^1.0.0
   dbus: ^0.7.11
   uuid: ^4.2.2
 
@@ -30,9 +30,7 @@ flutter:
         dartPluginClass: UnifiedPushLinux
 
 dependency_overrides:
-  unifiedpush_storage:
-    path: ../unifiedpush_storage
   unifiedpush_storage_interface:
     path: ../unifiedpush_storage_interface
-#  unifiedpush_platform_interface:
-#    path: ../unifiedpush_platform_interface
+  unifiedpush_platform_interface:
+    path: ../unifiedpush_platform_interface

@@ -1,16 +1,16 @@
-name: unifiedpush_storage
-description: UnifiedPush Storage
-version: 0.1.0
+name: unifiedpush_storage_shared_preferences
+description: UnifiedPush Storage using Shared Preferences
+version: 1.0.0
 homepage: "https://unifiedpush.org/developers/flutter"
 documentation: "https://unifiedpush.org/developers/flutter"
-repository: https://codeberg.org/UnifiedPush/flutter-connector/src/branch/main/unifiedpush_storage
+repository: https://codeberg.org/UnifiedPush/flutter-connector/src/branch/main/unifiedpush_storage_shared_preferences
 
 environment:
   sdk: ">=3.0.0 <4.0.0"
   flutter: ">=3.10.0"
 
 dependencies:
-  unifiedpush_storage_interface: ^0.1.0
+  unifiedpush_storage_interface: ^1.0.0
   shared_preferences: ^2.2.1
 
 dependency_overrides:
