@@ -69,8 +69,6 @@ abstract class UPNotificationUtils {
   }
 
   static void _initNotifications() async {
-    WidgetsFlutterBinding.ensureInitialized();
-
     const AndroidInitializationSettings initializationSettingsAndroid =
         AndroidInitializationSettings('notification_icon');
     const LinuxInitializationSettings initializationSettingsLinux =
