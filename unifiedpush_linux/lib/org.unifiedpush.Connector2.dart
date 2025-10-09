@@ -1,63 +1,114 @@
 import 'dart:typed_data';
 
 import 'package:dbus/dbus.dart';
-import 'package:unifiedpush_platform_interface/data/failed_reason.dart';
+import 'package:flutter/foundation.dart';
+import 'package:unifiedpush_platform_interface/data/public_key_set.dart';
 import 'package:unifiedpush_platform_interface/data/push_endpoint.dart';
 import 'package:unifiedpush_platform_interface/data/push_message.dart';
+import 'package:unifiedpush_storage_interface/storage.dart';
+import 'package:webpush_encryption/webpush_encryption.dart';
 
 class OrgUnifiedpushConnector2 extends DBusObject {
-  void Function(PushEndpoint endpoint)? _onNewEndpoint;
-  // The DBus spec for UP doesn't actually seem to use this but our API is
-  // providing the option for Android
-  void Function(FailedReason reason)?
-      _onRegistrationFailed; // ignore: unused_field
+  void Function(PushEndpoint endpoint, String instance)? _onNewEndpoint;
   void Function(String instance)? _onUnregistered;
-  void Function(PushMessage message)? _onMessage;
+  void Function(PushMessage message, String instance)? _onMessage;
+  UnifiedPushStorage storage;
+
+  DBusMethodResponse get _dbusSuccess {
+    return DBusMethodSuccessResponse([DBusDict.stringVariant({})]);
+  }
 
   /// Creates a new object to expose on [path].
-  OrgUnifiedpushConnector2({
-    DBusObjectPath path = const DBusObjectPath.unchecked('/org/unifiedpush/Connector'),
-  }) : super(path);
+  OrgUnifiedpushConnector2(this.storage) : super(const DBusObjectPath.unchecked('/org/unifiedpush/Connector'));
 
   Future<void> initializeCallback({
-    void Function(PushEndpoint endpoint)? onNewEndpoint,
-    void Function(FailedReason reason)? onRegistrationFailed,
-    void Function(String instance)? onUnregistered,
-    void Function(PushMessage message)? onMessage,
+    void Function(PushEndpoint endpoint, String instance)? onNewEndpoint,
+    void Function(String instance,)? onUnregistered,
+    void Function(PushMessage message, String instance)? onMessage,
   }) async {
     _onNewEndpoint = onNewEndpoint;
-    _onRegistrationFailed = onRegistrationFailed;
     _onUnregistered = onUnregistered;
     _onMessage = onMessage;
   }
 
   /// Implementation of org.unifiedpush.Connector2.Message()
-  Future<DBusMethodResponse> doMessage(Map<String, DBusValue> args) async {
-    _onMessage?.call(
-      PushMessage(
-        Uint8List.fromList(args["message"]!.asByteArray().toList()),
-        true,
-      ),
+  Future<DBusMethodResponse> doOnMessage(
+      String instance,
+      Map<String, DBusValue> args
+      ) async {
+    final onMessage = _onMessage;
+    if (onMessage == null) return _dbusSuccess;
+    var serializedKey = await storage.keys.get(instance);
+    var bytesMessage = args["message"]?.asByteArray().toList();
+    if (bytesMessage == null) return DBusMethodErrorResponse.invalidArgs();
+    var message = PushMessage(
+        Uint8List.fromList(bytesMessage),
+      false,
     );
+    try {
+      if (serializedKey != null) {
+        var key = await WebPushKeySet.deserialize(serializedKey);
+        message = PushMessage(
+            await WebPush().decrypt(key, message.content),
+            true
+        );
+      } else {
+        throw Exception("No webpush key found for $instance");
+      }
+    } catch(e) {
+      if (e is ArgumentError || e is KeyError || e is DecryptionError) {
+        debugPrint("Could not decrypt message: ${e.runtimeType}");
+      } else {
+        debugPrint("Could not decrypt message: $e");
+      }
+    } finally {
+      onMessage.call(message, instance);
+    }
+    return _dbusSuccess;
+  }
 
-    return DBusMethodSuccessResponse();
+  PublicKeySet _publicKeySet(PublicWebPushKey pubkey) {
+    return PublicKeySet(
+        pubkey.p256dh.replaceAll("=", ""),
+        pubkey.auth.replaceAll("=", "")
+    );
   }
 
   /// Implementation of org.unifiedpush.Connector2.NewEndpoint()
-  Future<DBusMethodResponse> doNewEndpoint(Map<String, DBusValue> args) async {
-    _onNewEndpoint?.call(
+  Future<DBusMethodResponse> doOnNewEndpoint(
+      String instance,
+      Map<String, DBusValue> args
+      ) async {
+    final onNewEndpoint = _onNewEndpoint;
+    if (onNewEndpoint == null) return _dbusSuccess;
+    var serializedKey = await storage.keys.get(instance);
+    WebPushKeySet key;
+    if (serializedKey == null) {
+      key = await WebPushKeySet.newKeyPair();
+      storage.keys.set(instance, key.serialize);
+    } else {
+      key = await WebPushKeySet.deserialize(serializedKey);
+    }
+    onNewEndpoint.call(
       PushEndpoint(
         args["endpoint"]!.asString(),
-        null,
+        _publicKeySet(key.publicKey),
       ),
+      instance
     );
-
-    return DBusMethodSuccessResponse();
+    return  _dbusSuccess;
   }
 
   /// Implementation of org.unifiedpush.Connector2.Unregistered()
-  Future<DBusMethodResponse> doUnregistered(Map<String, DBusValue> args) async {
-    _onUnregistered?.call(args["token"]!.asString());
+  Future<DBusMethodResponse> doOnUnregistered(String instance) async {
+    final onUnregistered = _onUnregistered;
+    if (onUnregistered == null) return _dbusSuccess;
+    storage.keys.remove(instance);
+    final regLeft = await storage.registrations.remove(instance);
+    if (!regLeft) {
+      storage.distrib.remove();
+    }
+    _onUnregistered?.call(instance);
 
     return DBusMethodSuccessResponse();
   }
@@ -72,12 +123,10 @@ class OrgUnifiedpushConnector2 extends DBusObject {
             DBusIntrospectArgument(
               DBusSignature('a{sv}'),
               DBusArgumentDirection.in_,
-              name: 'args',
             ),
             DBusIntrospectArgument(
               DBusSignature('a{sv}'),
               DBusArgumentDirection.out,
-              name: 'res',
             )
           ],
         ),
@@ -87,12 +136,10 @@ class OrgUnifiedpushConnector2 extends DBusObject {
             DBusIntrospectArgument(
               DBusSignature('a{sv}'),
               DBusArgumentDirection.in_,
-              name: 'args',
             ),
             DBusIntrospectArgument(
               DBusSignature('a{sv}'),
               DBusArgumentDirection.out,
-              name: 'res',
             )
           ],
         ),
@@ -102,12 +149,10 @@ class OrgUnifiedpushConnector2 extends DBusObject {
             DBusIntrospectArgument(
               DBusSignature('a{sv}'),
               DBusArgumentDirection.in_,
-              name: 'args',
             ),
             DBusIntrospectArgument(
               DBusSignature('a{sv}'),
               DBusArgumentDirection.out,
-              name: 'res',
             )
           ],
         )
@@ -117,27 +162,31 @@ class OrgUnifiedpushConnector2 extends DBusObject {
 
   @override
   Future<DBusMethodResponse> handleMethodCall(DBusMethodCall methodCall) async {
-    if (methodCall.interface == 'org.unifiedpush.Connector2') {
-      if (methodCall.name == 'Message') {
-        if (methodCall.signature != DBusSignature('a{sv}')) {
-          return DBusMethodErrorResponse.invalidArgs();
-        }
-        return doMessage(methodCall.values[0].asStringVariantDict());
-      } else if (methodCall.name == 'NewEndpoint') {
-        if (methodCall.signature != DBusSignature('a{sv}')) {
-          return DBusMethodErrorResponse.invalidArgs();
-        }
-        return doNewEndpoint(methodCall.values[0].asStringVariantDict());
-      } else if (methodCall.name == 'Unregistered') {
-        if (methodCall.signature != DBusSignature('a{sv}')) {
-          return DBusMethodErrorResponse.invalidArgs();
-        }
-        return doUnregistered(methodCall.values[0].asStringVariantDict());
-      } else {
-        return DBusMethodErrorResponse.unknownMethod();
-      }
-    } else {
+    if (methodCall.interface != 'org.unifiedpush.Connector2') {
       return DBusMethodErrorResponse.unknownInterface();
+    }
+    if (methodCall.signature != DBusSignature('a{sv}')) {
+      return DBusMethodErrorResponse.invalidArgs();
+    }
+
+    var args = methodCall.values[0].asStringVariantDict();
+    var token = args["token"]?.asString();
+    if (token == null) {
+      return DBusMethodErrorResponse.invalidArgs();
+    }
+    var instance = (await storage.registrations.getFromToken(token))?.instance;
+    if (instance == null) {
+      return DBusMethodErrorResponse.invalidArgs();
+    }
+    switch (methodCall.name) {
+      case "Message":
+        return doOnMessage(instance, args);
+      case "NewEndpoint":
+        return doOnNewEndpoint(instance, args);
+      case "Unregistered":
+        return doOnUnregistered(instance);
+      default:
+        return DBusMethodErrorResponse.unknownMethod();
     }
   }
 
@@ -146,7 +195,7 @@ class OrgUnifiedpushConnector2 extends DBusObject {
     if (interface == 'org.unifiedpush.Connector2') {
       return DBusMethodErrorResponse.unknownProperty();
     } else {
-      return DBusMethodErrorResponse.unknownProperty();
+      return DBusMethodErrorResponse.unknownInterface();
     }
   }
 
@@ -156,7 +205,7 @@ class OrgUnifiedpushConnector2 extends DBusObject {
     if (interface == 'org.unifiedpush.Connector2') {
       return DBusMethodErrorResponse.unknownProperty();
     } else {
-      return DBusMethodErrorResponse.unknownProperty();
+      return DBusMethodErrorResponse.unknownInterface();
     }
   }
 }

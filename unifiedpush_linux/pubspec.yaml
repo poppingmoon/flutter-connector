@@ -16,6 +16,7 @@ dependencies:
   unifiedpush_storage_interface: ^1.0.0
   dbus: ^0.7.11
   uuid: ^4.2.2
+  webpush_encryption: ^1.0.0-rc1
 
 dev_dependencies:
   flutter_test:
