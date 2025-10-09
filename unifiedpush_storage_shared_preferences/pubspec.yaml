@@ -13,6 +13,6 @@ dependencies:
   unifiedpush_storage_interface: ^1.0.0
   shared_preferences: ^2.2.1
 
-dependency_overrides:
-  unifiedpush_storage_interface:
-    path: ../unifiedpush_storage_interface
+#todev#dependency_overrides:
+#todev#  unifiedpush_storage_interface:
+#todev#    path: ../unifiedpush_storage_interface

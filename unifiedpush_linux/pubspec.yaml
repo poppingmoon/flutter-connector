@@ -30,8 +30,8 @@ flutter:
       linux:
         dartPluginClass: UnifiedPushLinux
 
-dependency_overrides:
-  unifiedpush_storage_interface:
-    path: ../unifiedpush_storage_interface
-  unifiedpush_platform_interface:
-    path: ../unifiedpush_platform_interface
+#todev#dependency_overrides:
+#todev#  unifiedpush_storage_interface:
+#todev#    path: ../unifiedpush_storage_interface
+#todev#  unifiedpush_platform_interface:
+#todev#    path: ../unifiedpush_platform_interface
