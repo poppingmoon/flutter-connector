@@ -27,6 +27,7 @@ const linuxAppName = "org.unifiedpush.Example";
 
 var endpoint = PushEndpoint("undefined", null);
 var registered = false;
+var showNoDistribDialog = true;
 
 class UPFunctions extends UnifiedPushFunctions {
   final List<String> features = [/*list of features*/];
@@ -202,8 +203,13 @@ class _HomePageState extends State<HomePage> {
        *            which uses a dialog
        */
       registerWithDefault(
-        UnifiedPushUi(context, [localInstance], UPFunctions(),
-            UnifiedPushStorageSharedPreferences()),
+        UnifiedPushUi(
+            context: context,
+            instances: [localInstance],
+            unifiedPushFunctions: UPFunctions(),
+            showNoDistribDialog: showNoDistribDialog,
+            onNoDistribDialogDismissed: () { showNoDistribDialog = false; }
+        ),
       );
 
       /**

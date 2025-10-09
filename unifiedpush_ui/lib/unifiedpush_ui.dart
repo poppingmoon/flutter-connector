@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:unifiedpush_storage_interface/storage.dart';
 
 import 'dialogs.dart';
 
@@ -15,21 +14,34 @@ class UnifiedPushUi {
   late BuildContext context;
   late List<String> instances;
   late UnifiedPushFunctions unifiedPushFunctions;
-  late UnifiedPushStorage storage;
 
-  UnifiedPushUi(
-      this.context, this.instances, this.unifiedPushFunctions, this.storage);
+  /// Whether we show a dialog if there is no dialog, may be useful to show only
+  /// once
+  late bool showNoDistribDialog;
+
+  /// The dialog when there is no distrib has been shown. May be useful to save
+  /// the info to not show again in the future.
+  late void Function() onNoDistribDialogDismissed;
+
+  UnifiedPushUi({
+    required this.context,
+    required this.instances,
+    required this.unifiedPushFunctions,
+    required this.showNoDistribDialog,
+    required this.onNoDistribDialogDismissed
+  });
 
   static const noDistribAck = "noDistributorAck";
 
   Future<void> onNoDistributorFound() async {
     if (!context.mounted) return;
-    if (!(await storage.getBool(noDistribAck) ?? false)) {
+    if (showNoDistribDialog) {
       return showDialog(
           context: context,
-          builder: noDistributorDialog(onDismissed: () async {
-            await storage.setBool(noDistribAck, true);
-          }));
+          builder: noDistributorDialog(
+              onDismissed: () async => onNoDistribDialogDismissed.call()
+          )
+      );
     }
   }
 
@@ -67,9 +79,5 @@ class UnifiedPushUi {
         await onManyDistributorFound(distributors);
       }
     }
-  }
-
-  Future<void> removeNoDistributorDialogACK() async {
-    await storage.remove(noDistribAck);
   }
 }
