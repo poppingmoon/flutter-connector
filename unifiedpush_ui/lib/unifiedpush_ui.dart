@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import 'dialogs.dart';
 
@@ -16,19 +15,33 @@ class UnifiedPushUi {
   late List<String> instances;
   late UnifiedPushFunctions unifiedPushFunctions;
 
-  UnifiedPushUi(this.context, this.instances, this.unifiedPushFunctions);
+  /// Whether we show a dialog if there is no dialog, may be useful to show only
+  /// once
+  late bool showNoDistribDialog;
+
+  /// The dialog when there is no distrib has been shown. May be useful to save
+  /// the info to not show again in the future.
+  late void Function() onNoDistribDialogDismissed;
+
+  UnifiedPushUi({
+    required this.context,
+    required this.instances,
+    required this.unifiedPushFunctions,
+    required this.showNoDistribDialog,
+    required this.onNoDistribDialogDismissed
+  });
 
   static const noDistribAck = "noDistributorAck";
 
   Future<void> onNoDistributorFound() async {
-    final prefs = await SharedPreferences.getInstance();
     if (!context.mounted) return;
-    if (!(prefs.getBool(noDistribAck) ?? false)) {
+    if (showNoDistribDialog) {
       return showDialog(
           context: context,
-          builder: noDistributorDialog(onDismissed: () {
-            prefs.setBool(noDistribAck, true);
-          }));
+          builder: noDistributorDialog(
+              onDismissed: () async => onNoDistribDialogDismissed.call()
+          )
+      );
     }
   }
 
@@ -66,10 +79,5 @@ class UnifiedPushUi {
         await onManyDistributorFound(distributors);
       }
     }
-  }
-
-  static Future<void> removeNoDistributorDialogACK() async {
-    final prefs = await SharedPreferences.getInstance();
-    prefs.remove(noDistribAck);
   }
 }

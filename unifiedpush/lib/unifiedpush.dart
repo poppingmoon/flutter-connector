@@ -4,6 +4,7 @@ import 'package:unifiedpush_platform_interface/data/failed_reason.dart';
 import 'package:unifiedpush_platform_interface/data/push_endpoint.dart';
 import 'package:unifiedpush_platform_interface/data/push_message.dart';
 import 'package:unifiedpush_platform_interface/unifiedpush_platform_interface.dart';
+import 'package:unifiedpush_storage_interface/storage.dart';
 
 import 'constants.dart';
 
@@ -56,6 +57,8 @@ class UnifiedPush {
   ///   won't receive push messages anymore
   /// - [onMessage] Invoked when a new message is received
   /// - [onTempUnavailable] Invoked when the distributor backend is temporary unavailable.
+  /// - [storage] **Required for Linux**: UnifiedPushStorage
+  /// - [linuxDBusName] **Required for Linux**: DBus name for the application, should be linked to your app, like `tld.yourdomain.YourApp.service`
   ///
   /// You can ignore instances if you don't use them.
   static Future<bool> initialize({
@@ -64,10 +67,14 @@ class UnifiedPush {
     void Function(String instance)? onUnregistered,
     void Function(PushMessage message, String instance)? onMessage,
     void Function(String instance)? onTempUnavailable,
-    String? linuxDBusName,
+    LinuxOptions? linuxOptions,
   }) async {
     if (Platform.isLinux) {
-      UnifiedPushPlatform.instance.setDBusName(linuxDBusName);
+      // If no DBusName is set, we don't initialize UnifiedPush on Linux,
+      // so project supporting Linux won't crash when they upgrade to a version
+      // of flutter_connector with support for Linux by default
+      if (linuxOptions == null) return false;
+      UnifiedPushPlatform.instance.setLinuxOptions(linuxOptions);
     }
     await UnifiedPushPlatform.instance.initializeCallback(
         onNewEndpoint: (PushEndpoint e, String i) async =>
@@ -77,8 +84,7 @@ class UnifiedPush {
         onUnregistered: (String i) async => onUnregistered?.call(i),
         onMessage: (PushMessage m, String i) async => onMessage?.call(m, i));
     await UnifiedPushPlatform.instance.initializeOnTempUnavailable(
-        (String i) async => onTempUnavailable?.call(i)
-    );
+        (String i) async => onTempUnavailable?.call(i));
     return await UnifiedPush.getDistributor() != null;
   }
 

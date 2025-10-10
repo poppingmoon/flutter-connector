@@ -34,8 +34,15 @@ abstract class UPNotificationUtils {
     if (instance != localInstance) {
       return false;
     }
-    debugPrint("onNotification");
-    var payload = utf8.decode(message.content);
+    String payload;
+    try {
+      payload = utf8.decode(message.content);
+    } catch (e) {
+      // We may have a FormatException while doing utf8.decode, if it was encrypted
+      // but we couldn't decrypt it.
+      debugPrint("Couldn't decrypt content (decrypted=${message.decrypted}): $e");
+      payload = "Couldn't decrypt";
+    }
 
     String title = 'UP-Example'; // Default title
     String body = 'Could not get the content'; // Default body
@@ -69,8 +76,6 @@ abstract class UPNotificationUtils {
   }
 
   static void _initNotifications() async {
-    WidgetsFlutterBinding.ensureInitialized();
-
     const AndroidInitializationSettings initializationSettingsAndroid =
         AndroidInitializationSettings('notification_icon');
     const LinuxInitializationSettings initializationSettingsLinux =

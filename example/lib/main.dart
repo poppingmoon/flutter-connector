@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:math';
 
@@ -5,16 +6,87 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:unifiedpush/unifiedpush.dart';
+import 'package:unifiedpush_platform_interface/unifiedpush_platform_interface.dart';
+import 'package:unifiedpush_storage_shared_preferences/storage.dart';
 import 'package:unifiedpush_ui/unifiedpush_ui.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'notification_utils.dart';
 
-Future<void> main() async {
-  runApp(const MyApp());
-  EasyLoading.instance.userInteractions = false;
+Future<void> main(List<String> args) async {
+  debugPrint("main");
+  for (var arg in args) {
+    debugPrint(arg);
+  }
+  WidgetsFlutterBinding.ensureInitialized();
+  UnifiedPushConnection().init(args.contains("--unifiedpush-bg"));
+  if (!args.contains("--unifiedpush-bg")) {
+    runApp(const MyApp());
+    EasyLoading.instance.userInteractions = false;
+  }
 }
+
+class UnifiedPushConnection {
+  void _onUpdate() {
+    controller.add("update");
+  }
+
+  void init(bool background) {
+    UnifiedPush.initialize(
+        onNewEndpoint:
+        onNewEndpoint,
+        // takes (String endpoint, String instance) in args
+        onRegistrationFailed:
+        onRegistrationFailed,
+        // takes (String instance)
+        onUnregistered: onUnregistered,
+        // takes (String instance)
+        onMessage: UPNotificationUtils
+            .basicOnNotification,
+        linuxOptions: LinuxOptions(
+          dbusName: linuxAppName,
+          storage: UnifiedPushStorageSharedPreferences(),
+          background: background
+        ))
+        .then((registered) {
+      if (registered) {
+        UnifiedPush.register(
+          instance: localInstance,
+        );
+      }
+    });
+  }
+
+  void onNewEndpoint(PushEndpoint nEndpoint, String instance) {
+    if (instance != localInstance) {
+      return;
+    }
+    registered = true;
+    endpoint = nEndpoint;
+    debugPrint("New endpoint on ${this.hashCode}");
+    debugPrint("Endpoint (temp=${endpoint.temporary}): ${endpoint.url}");
+    debugPrint("To test: ${testPage(endpoint)}");
+    _onUpdate();
+  }
+
+
+  void onUnregistered(String instance) {
+    if (instance != localInstance) {
+      return;
+    }
+    registered = false;
+    debugPrint("unregistered");
+    _onUpdate();
+  }
+
+  void onRegistrationFailed(FailedReason reason, String instance) {
+    debugPrint("Registration failed: $reason");
+    onUnregistered(instance);
+  }
+}
+
+final controller = StreamController<String>.broadcast();
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
@@ -26,6 +98,7 @@ const linuxAppName = "org.unifiedpush.Example";
 
 var endpoint = PushEndpoint("undefined", null);
 var registered = false;
+var showNoDistribDialog = true;
 
 class UPFunctions extends UnifiedPushFunctions {
   final List<String> features = [/*list of features*/];
@@ -65,24 +138,10 @@ class MyApp extends StatefulWidget {
 class MyAppState extends State<MyApp> {
   @override
   void initState() {
-    UnifiedPush.initialize(
-      onNewEndpoint:
-          onNewEndpoint, // takes (String endpoint, String instance) in args
-      onRegistrationFailed: onRegistrationFailed, // takes (String instance)
-      onUnregistered: onUnregistered, // takes (String instance)
-      onMessage: UPNotificationUtils
-          .basicOnNotification, // takes (String message, String instance) in args
-      linuxDBusName: linuxAppName,
-    ).then((registered) {
-      if (registered) {
-        UnifiedPush.register(
-          instance: localInstance,
-        );
-      }
-    });
     _isAndroidPermissionGranted().catchError((err) {
       debugPrint("Exception while granting permissions");
     });
+    controller.stream.listen((_) => refresh());
     super.initState();
   }
 
@@ -94,32 +153,6 @@ class MyAppState extends State<MyApp> {
 
       await androidImplementation?.requestNotificationsPermission();
     }
-  }
-
-  void onNewEndpoint(PushEndpoint nEndpoint, String instance) {
-    if (instance != localInstance) {
-      return;
-    }
-    registered = true;
-    endpoint = nEndpoint;
-    setState(() {
-      debugPrint("Endpoint (temp=${endpoint.temporary}): ${endpoint.url}");
-      debugPrint("To test: ${testPage(endpoint)}");
-    });
-  }
-
-  void onRegistrationFailed(FailedReason reason, String instance) {
-    onUnregistered(instance);
-  }
-
-  void onUnregistered(String instance) {
-    if (instance != localInstance) {
-      return;
-    }
-    registered = false;
-    setState(() {
-      debugPrint("unregistered");
-    });
   }
 
   void refresh() {
@@ -200,9 +233,11 @@ class _HomePageState extends State<HomePage> {
        */
       registerWithDefault(
         UnifiedPushUi(
-          context,
-          [localInstance],
-          UPFunctions(),
+            context: context,
+            instances: [localInstance],
+            unifiedPushFunctions: UPFunctions(),
+            showNoDistribDialog: showNoDistribDialog,
+            onNoDistribDialogDismissed: () { showNoDistribDialog = false; }
         ),
       );
 

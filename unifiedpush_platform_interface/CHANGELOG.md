@@ -1,3 +1,7 @@
+## 4.0.0
+* Make all functions of the interface abstract;
+* Use setLinuxOptions instead of many functions;
+
 ## 3.1.0
 * Add PushEndpoint.temporary, to be able to ignore new endpoint from fallback distributors, when the primary distrib is down
 * Add optional initializeOnTempUnavailable function

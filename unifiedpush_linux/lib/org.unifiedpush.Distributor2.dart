@@ -1,14 +1,11 @@
 import 'package:dbus/dbus.dart';
 
 class OrgUnifiedpushDistributor2 extends DBusRemoteObject {
-  OrgUnifiedpushDistributor2(
-    super.client,
-    String destination,
-    DBusObjectPath path,
-  ) : super(
-          name: destination,
-          path: path,
-        );
+  OrgUnifiedpushDistributor2(DBusClient client, String distributor) : super(
+    client,
+    name: distributor,
+    path: DBusObjectPath('/org/unifiedpush/Distributor'),
+  );
 
   /// Invokes org.unifiedpush.Distributor2.Register()
   Future<Map<String, DBusValue>> callRegister(
