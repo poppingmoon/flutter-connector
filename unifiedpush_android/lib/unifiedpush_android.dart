@@ -149,4 +149,9 @@ class UnifiedPushAndroid extends UnifiedPushPlatform {
         break;
     }
   }
+
+  @override
+  void setLinuxOptions(LinuxOptions options) {
+    // Not needed
+  }
 }
