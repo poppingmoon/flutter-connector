@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:flutter/foundation.dart';
 import 'package:unifiedpush_linux/org.unifiedpush.Connector2.dart';
 
 import 'package:dbus/dbus.dart';
@@ -48,6 +51,7 @@ class UnifiedPushLinux extends UnifiedPushPlatform {
   OrgUnifiedpushConnector2? _connector;
   String? _dbusName;
   UnifiedPushStorage? _storage;
+  bool _background = false;
   void Function(FailedReason reason, String instance)? onRegistrationFailed;
 
   static void registerWith() {
@@ -161,25 +165,11 @@ class UnifiedPushLinux extends UnifiedPushPlatform {
     );
   }
 
-  @override
-  void setDBusName(String? name) {
-    assert(name != null, "The DBus name should be set");
-    assert(name!.split(".").length >= 3,
-        "The DBus name should be a fully-qualified name (e.g. com.example.App)");
-    _dbusName = name;
-  }
-
   String _getDBusName() {
     var dbusName = _dbusName;
     assert(dbusName != null,
     "setDBusName must be called before initialization");
     return dbusName!;
-  }
-
-  @override
-  void setStorage(UnifiedPushStorage? storage) {
-    assert(storage != null, "Storage must be set");
-    _storage = storage!;
   }
 
   _setDistributor(String distrib) async {
@@ -188,7 +178,33 @@ class UnifiedPushLinux extends UnifiedPushPlatform {
     _distributor = OrgUnifiedpushDistributor2(_dbusClient, distrib);
     if (connector!.client == null) {
       await _dbusClient.registerObject(connector);
-      await _dbusClient.requestName(_getDBusName());
+      Set<DBusRequestNameFlag> flags;
+      if (_background) {
+        // If we are in the background, we allow being replaced by a foreground
+        // instance, but don't need to enqueued.
+        flags = {
+          DBusRequestNameFlag.allowReplacement,
+          DBusRequestNameFlag.doNotQueue
+        };
+      } else {
+        // If we are in the foreground, we may replace a background one
+        flags = {
+          DBusRequestNameFlag.replaceExisting
+        };
+    }
+      final reply = await _dbusClient.requestName(
+        _getDBusName(),
+        flags: flags
+      );
+      debugPrint("RequestName reply: $reply");
+      // So we are in the background, and there is already one existing, we exit
+      if (reply == DBusRequestNameReply.exists) {
+        mayExit();
+      }
+      _dbusClient.nameLost.first.then((name) {
+        debugPrint("We no longer own $name");
+        mayExit();
+      });
     }
   }
 
@@ -206,5 +222,25 @@ class UnifiedPushLinux extends UnifiedPushPlatform {
     var storage = _storage;
     assert(storage != null, "Storage must be set before calling $function");
     return storage!;
+  }
+
+  @override
+  Future<void> initializeOnTempUnavailable(
+      void Function(String instance)? onTempUnavailable
+      ) async {
+    // Do nothing for the moment.
+  }
+
+  @override
+  void setLinuxOptions(LinuxOptions options) {
+    assert(options.dbusName.split(".").length >= 3,
+    "The DBus name should be a fully-qualified name (e.g. com.example.App)");
+    _dbusName = options.dbusName;
+    _storage = options.storage;
+    _background = options.background;
+  }
+
+  void mayExit() {
+    if (_background) exit(0);
   }
 }

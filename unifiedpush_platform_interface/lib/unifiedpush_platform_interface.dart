@@ -7,8 +7,14 @@ import 'package:unifiedpush_platform_interface/data/push_message.dart';
 import 'package:unifiedpush_storage_interface/storage.dart';
 
 class LinuxOptions {
+  /// FQN for DBus (e.g. com.example.App)
   final String dbusName;
+  /// Implementation of UnifiedPushStorage
   final UnifiedPushStorage storage;
+  /// If the application is in the background,
+  /// then it will close itself when the DBUS name
+  /// is replaced by another instance (which should be in the foreground).
+  /// This allow having a minimal code for background processing.
   final bool background;
   LinuxOptions(
       {required this.dbusName,
