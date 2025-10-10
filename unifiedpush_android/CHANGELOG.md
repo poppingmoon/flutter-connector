@@ -1,8 +1,17 @@
-## 3.2.0
+## 3.3.0
+* Fix: Do not rotate keys on re-registrations
+* Add `--unifiedpush-bg` argument to dart entrypoint
+* Since 3.1.1:
+    * Follow AND_3.1.0 specifications, with migration and temp unavailibility
+    * Compile with SDK 36
+    * Bump lowest supported kotlin version to 2.0
+
+## 3.2.0 (Retracted)
 * Bump android-connector to 3.1.0:
-    * Follow specifications AND_3.1.0, with migration and temp unavailibility
+    * Follow AND_3.1.0 specifications, with migration and temp unavailibility
     * https://codeberg.org/UnifiedPush/android-connector/releases/tag/3.1.0
 * Compile with SDK 36
+* Bump lowest supported kotlin version to 2.0
 * Bump dependencies
 
 ## 3.1.1
