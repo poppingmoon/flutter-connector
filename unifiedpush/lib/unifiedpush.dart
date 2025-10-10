@@ -67,16 +67,14 @@ class UnifiedPush {
     void Function(String instance)? onUnregistered,
     void Function(PushMessage message, String instance)? onMessage,
     void Function(String instance)? onTempUnavailable,
-    UnifiedPushStorage? storage,
-    String? linuxDBusName,
+    LinuxOptions? linuxOptions,
   }) async {
     if (Platform.isLinux) {
       // If no DBusName is set, we don't initialize UnifiedPush on Linux,
       // so project supporting Linux won't crash when they upgrade to a version
       // of flutter_connector with support for Linux by default
-      if (linuxDBusName == null) return false;
-      UnifiedPushPlatform.instance.setDBusName(linuxDBusName);
-      UnifiedPushPlatform.instance.setStorage(storage);
+      if (linuxOptions == null) return false;
+      UnifiedPushPlatform.instance.setLinuxOptions(linuxOptions);
     }
     await UnifiedPushPlatform.instance.initializeCallback(
         onNewEndpoint: (PushEndpoint e, String i) async =>

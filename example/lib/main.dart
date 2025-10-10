@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:unifiedpush/unifiedpush.dart';
+import 'package:unifiedpush_platform_interface/unifiedpush_platform_interface.dart';
 import 'package:unifiedpush_storage_shared_preferences/storage.dart';
 import 'package:unifiedpush_ui/unifiedpush_ui.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -19,7 +20,7 @@ Future<void> main(List<String> args) async {
     debugPrint(arg);
   }
   WidgetsFlutterBinding.ensureInitialized();
-  UnifiedPushConnection().init();
+  UnifiedPushConnection().init(args.contains("--unifiedpush-bg"));
   if (!args.contains("--unifiedpush-bg")) {
     runApp(const MyApp());
     EasyLoading.instance.userInteractions = false;
@@ -31,7 +32,7 @@ class UnifiedPushConnection {
     controller.add("update");
   }
 
-  void init() {
+  void init(bool background) {
     UnifiedPush.initialize(
         onNewEndpoint:
         onNewEndpoint,
@@ -43,9 +44,11 @@ class UnifiedPushConnection {
         // takes (String instance)
         onMessage: UPNotificationUtils
             .basicOnNotification,
-        // takes (String message, String instance) in args
-        linuxDBusName: linuxAppName,
-        storage: UnifiedPushStorageSharedPreferences())
+        linuxOptions: LinuxOptions(
+          dbusName: linuxAppName,
+          storage: UnifiedPushStorageSharedPreferences(),
+          background: background
+        ))
         .then((registered) {
       if (registered) {
         UnifiedPush.register(
