@@ -56,7 +56,10 @@ open class UnifiedPushService: PushService() {
                 context.resources.configuration
             )
             dartExecutor.executeDartEntrypoint(
-                DartExecutor.DartEntrypoint.createDefault()
+                DartExecutor.DartEntrypoint.createDefault().also {
+                    it
+                },
+                listOf("--unifiedpush-bg")
             )
         }
     }
