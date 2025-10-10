@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:math';
 
@@ -12,11 +13,77 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'notification_utils.dart';
 
-Future<void> main() async {
+Future<void> main(List<String> args) async {
+  debugPrint("main");
+  for (var arg in args) {
+    debugPrint(arg);
+  }
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const MyApp());
-  EasyLoading.instance.userInteractions = false;
+  UnifiedPushConnection().init();
+  if (!args.contains("--unifiedpush-bg")) {
+    runApp(const MyApp());
+    EasyLoading.instance.userInteractions = false;
+  }
 }
+
+class UnifiedPushConnection {
+  void _onUpdate() {
+    controller.add("update");
+  }
+
+  void init() {
+    UnifiedPush.initialize(
+        onNewEndpoint:
+        onNewEndpoint,
+        // takes (String endpoint, String instance) in args
+        onRegistrationFailed:
+        onRegistrationFailed,
+        // takes (String instance)
+        onUnregistered: onUnregistered,
+        // takes (String instance)
+        onMessage: UPNotificationUtils
+            .basicOnNotification,
+        // takes (String message, String instance) in args
+        linuxDBusName: linuxAppName,
+        storage: UnifiedPushStorageSharedPreferences())
+        .then((registered) {
+      if (registered) {
+        UnifiedPush.register(
+          instance: localInstance,
+        );
+      }
+    });
+  }
+
+  void onNewEndpoint(PushEndpoint nEndpoint, String instance) {
+    if (instance != localInstance) {
+      return;
+    }
+    registered = true;
+    endpoint = nEndpoint;
+    debugPrint("New endpoint on ${this.hashCode}");
+    debugPrint("Endpoint (temp=${endpoint.temporary}): ${endpoint.url}");
+    debugPrint("To test: ${testPage(endpoint)}");
+    _onUpdate();
+  }
+
+
+  void onUnregistered(String instance) {
+    if (instance != localInstance) {
+      return;
+    }
+    registered = false;
+    debugPrint("unregistered");
+    _onUpdate();
+  }
+
+  void onRegistrationFailed(FailedReason reason, String instance) {
+    debugPrint("Registration failed: $reason");
+    onUnregistered(instance);
+  }
+}
+
+final controller = StreamController<String>.broadcast();
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
@@ -68,26 +135,10 @@ class MyApp extends StatefulWidget {
 class MyAppState extends State<MyApp> {
   @override
   void initState() {
-    UnifiedPush.initialize(
-            onNewEndpoint:
-                onNewEndpoint, // takes (String endpoint, String instance) in args
-            onRegistrationFailed:
-                onRegistrationFailed, // takes (String instance)
-            onUnregistered: onUnregistered, // takes (String instance)
-            onMessage: UPNotificationUtils
-                .basicOnNotification, // takes (String message, String instance) in args
-            linuxDBusName: linuxAppName,
-            storage: UnifiedPushStorageSharedPreferences())
-        .then((registered) {
-      if (registered) {
-        UnifiedPush.register(
-          instance: localInstance,
-        );
-      }
-    });
     _isAndroidPermissionGranted().catchError((err) {
       debugPrint("Exception while granting permissions");
     });
+    controller.stream.listen((_) => refresh());
     super.initState();
   }
 
@@ -99,32 +150,6 @@ class MyAppState extends State<MyApp> {
 
       await androidImplementation?.requestNotificationsPermission();
     }
-  }
-
-  void onNewEndpoint(PushEndpoint nEndpoint, String instance) {
-    if (instance != localInstance) {
-      return;
-    }
-    registered = true;
-    endpoint = nEndpoint;
-    setState(() {
-      debugPrint("Endpoint (temp=${endpoint.temporary}): ${endpoint.url}");
-      debugPrint("To test: ${testPage(endpoint)}");
-    });
-  }
-
-  void onRegistrationFailed(FailedReason reason, String instance) {
-    onUnregistered(instance);
-  }
-
-  void onUnregistered(String instance) {
-    if (instance != localInstance) {
-      return;
-    }
-    registered = false;
-    setState(() {
-      debugPrint("unregistered");
-    });
   }
 
   void refresh() {
