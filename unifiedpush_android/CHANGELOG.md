@@ -1,3 +1,6 @@
+## 3.4.0
+* Use new platform interface
+
 ## 3.3.1
 * Fix: Token duplication on re-registrations
 * Fix: Do not rotate keys on re-registrations
