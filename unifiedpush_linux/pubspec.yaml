@@ -17,6 +17,7 @@ dependencies:
   dbus: ^0.7.11
   uuid: ^4.2.2
   webpush_encryption: ^1.0.0-rc1
+  window_manager: ^0.5.1
 
 dev_dependencies:
   flutter_test:

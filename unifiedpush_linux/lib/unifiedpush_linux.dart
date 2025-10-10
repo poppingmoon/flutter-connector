@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:unifiedpush_linux/org.freedesktop.DBus.dart';
 import 'package:unifiedpush_linux/org.unifiedpush.Connector2.dart';
 
 import 'package:dbus/dbus.dart';
@@ -12,6 +13,8 @@ import 'package:unifiedpush_platform_interface/unifiedpush_platform_interface.da
 import 'package:unifiedpush_storage_interface/registrations_storage.dart';
 import 'package:unifiedpush_storage_interface/storage.dart';
 import 'package:uuid/v4.dart';
+import 'package:window_manager/window_manager.dart';
+import 'package:path/path.dart' as p;
 
 enum RegistrationFailure {
   internalError("INTERNAL_ERROR"),
@@ -158,6 +161,7 @@ class UnifiedPushLinux extends UnifiedPushPlatform {
     if (distrib != null) {
       _setDistributor(distrib);
     }
+    _writeDBusService();
     return connector.initializeCallback(
       onNewEndpoint: onNewEndpoint,
       onUnregistered: onUnregistered,
@@ -233,12 +237,36 @@ class UnifiedPushLinux extends UnifiedPushPlatform {
 
   @override
   void setLinuxOptions(LinuxOptions options) {
+    if (options.background) {
+      WindowManager.instance.hide();
+    }
     assert(options.dbusName.split(".").length >= 3,
     "The DBus name should be a fully-qualified name (e.g. com.example.App)");
     _dbusName = options.dbusName;
     _storage = options.storage;
     _background = options.background;
   }
+
+  Future<void> _writeDBusService() async {
+    final homeDir = Platform.environment['HOME']!;
+    final localShareDir = Directory(p.join(homeDir, '.local', 'share', 'dbus-1', 'services'));
+    if (!await localShareDir.exists()) {
+      await localShareDir.create(recursive: true);
+    }
+
+    final conf = File(p.join(localShareDir.path, "$_dbusName.service"));
+    final executablePath = Platform.resolvedExecutable;
+
+    final content = '''
+[D-BUS Service]
+Name=$_dbusName
+Exec=/bin/sh -c "FLUTTER_HEADLESS=1 $executablePath --unifiedpush-bg"
+''';
+    await conf.writeAsString(content);
+    OrgFreedesktopDBus(_dbusClient).reloadConfig();
+  }
+
+
 
   void mayExit() {
     if (_background) exit(0);
