@@ -41,4 +41,5 @@ steps:
               from_secret: codeberg_token
           file:
               - flutter-example.apk
+              - flutter-example-linux.zip
           package: true
