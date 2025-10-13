@@ -6,6 +6,7 @@ steps:
     - name: Init
       # Fork of https://github.com/MobileDevOps/flutter-sdk-image
       image: codeberg.org/s1m/flutter-sdk-image:latest
+      pull: true
       commands:
         - git config --global --add safe.directory /home/mobiledevops/.flutter-sdk
         - ./dev.sh
