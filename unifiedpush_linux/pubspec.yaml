@@ -1,6 +1,6 @@
 name: unifiedpush_linux
 description: Linux implementation of UnifiedPush plugin.
-version: 0.1.0
+version: 1.0.0
 homepage: "https://unifiedpush.org/developers/flutter"
 documentation: "https://unifiedpush.org/developers/flutter"
 repository: https://codeberg.org/UnifiedPush/flutter-connector/src/branch/main/unifiedpush_linux
@@ -16,7 +16,7 @@ dependencies:
   unifiedpush_storage_interface: ^1.0.0
   dbus: ^0.7.11
   uuid: ^4.2.2
-  webpush_encryption: ^1.0.0-rc1
+  webpush_encryption: ^1.0.0
   window_manager: ^0.5.1
   path: ^1.9.1
 
