@@ -1,7 +1,7 @@
 ## 6.2.0
 * Support Linux by default!
     * To support linux, add LinuxOptions during initialization
-* Exp init field `linuxDBusName` has been removed.
+* Experimental init field `linuxDBusName` has been removed.
 
 ## 6.1.0
 * Add support for onTempUnavailable
