@@ -18,12 +18,14 @@ steps:
         - cd ../example
         - flutter pub get
     - name: Build Android
+      image: codeberg.org/s1m/flutter-sdk-image:latest
       commands:
         - cd example
         - flutter build apk
         - cd ..
         - mv ./example/build/app/outputs/flutter-apk/app-release.apk flutter-example.apk
     - name: Build Linux
+      image: codeberg.org/s1m/flutter-sdk-image:latest
       commands:
         - cd example
         - flutter build linux
