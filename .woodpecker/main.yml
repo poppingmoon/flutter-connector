@@ -1,7 +1,7 @@
 steps:
     check:
-        # https://github.com/MobileDevOps/flutter-sdk-image
-        image: mobiledevops/flutter-sdk-image:latest
+        # Fork of https://github.com/MobileDevOps/flutter-sdk-image
+        image: codeberg.org/s1m/flutter-sdk-image:latest
         when:
           branch: main
           event: [push, pull_request, manual]
