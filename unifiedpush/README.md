@@ -141,6 +141,19 @@ An example app can be found on the [repository](https://codeberg.org/UnifiedPush
 
 ## Troubleshooting
 
+### The build fails because `:webcrypto is currently compiled against android-31.`
+
+`unifiedpush-linux` depends on Google's webcrypto library, which isn't updated yet. You can resolve the issue by editing your `pubspec.yaml` to add:
+
+```
+dependency_overrides:
+   webcrypto:
+       # Until their sdk is fixed
+       git:
+           url: https://codeberg.org/UnifiedPush/webcrypto.dart.git
+           ref: 0.6.0-up1
+```
+
 ### The build fails because of duplicate classes
 
 An error is thrown during build about duplicate classes, _related to tink_:
