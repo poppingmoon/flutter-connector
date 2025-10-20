@@ -1,0 +1,4 @@
+[D-BUS Service]
+Name=org.unifiedpush.Example
+# the flutter command will be automatically updated to use flatpak org.unifiedpush.Example
+Exec=sh -c "FLUTTER_HEADLESS=1 unifiedpush_example --unifiedpush-bg"
