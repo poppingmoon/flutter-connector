@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+
+Name=UnifiedPush Example
+Comment=Example application using UnifiedPush
+Categories=Utility;Documentation;
+
+Icon=org.unifiedpush.Example
+Exec=unifiedpush_example
+Terminal=false

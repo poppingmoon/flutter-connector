@@ -94,7 +94,7 @@ final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
 const localInstance = "myInstance";
 // The Linux app name is used to register the application with DBus
 // Because of this it needs to be a valid fully-qualified name
-const linuxAppName = "org.unifiedpush.Example";
+const linuxAppName = "org.unifiedpush.Troubleshooter";
 
 var endpoint = PushEndpoint("undefined", null);
 var registered = false;
@@ -291,9 +291,7 @@ class _HomePageState extends State<HomePage> {
     final key = endpoint.pubKeySet;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Unifiedpush Example'),
-      ),
+      appBar: AppBar(title: const Text('Unifiedpush Troubleshooter')),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20.0),
