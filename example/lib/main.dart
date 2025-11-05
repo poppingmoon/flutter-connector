@@ -34,26 +34,21 @@ class UnifiedPushConnection {
 
   void init(bool background) {
     UnifiedPush.initialize(
-        onNewEndpoint:
-        onNewEndpoint,
-        // takes (String endpoint, String instance) in args
-        onRegistrationFailed:
-        onRegistrationFailed,
-        // takes (String instance)
-        onUnregistered: onUnregistered,
-        // takes (String instance)
-        onMessage: UPNotificationUtils
-            .basicOnNotification,
-        linuxOptions: LinuxOptions(
-          dbusName: linuxAppName,
-          storage: UnifiedPushStorageSharedPreferences(),
-          background: background
-        ))
-        .then((registered) {
+      onNewEndpoint: onNewEndpoint,
+      // takes (String endpoint, String instance) in args
+      onRegistrationFailed: onRegistrationFailed,
+      // takes (String instance)
+      onUnregistered: onUnregistered,
+      // takes (String instance)
+      onMessage: UPNotificationUtils.basicOnNotification,
+      linuxOptions: LinuxOptions(
+        dbusName: linuxAppName,
+        storage: UnifiedPushStorageSharedPreferences(),
+        background: background,
+      ),
+    ).then((registered) {
       if (registered) {
-        UnifiedPush.register(
-          instance: localInstance,
-        );
+        UnifiedPush.register(instance: localInstance);
       }
     });
   }
@@ -69,7 +64,6 @@ class UnifiedPushConnection {
     debugPrint("To test: ${testPage(endpoint)}");
     _onUpdate();
   }
-
 
   void onUnregistered(String instance) {
     if (instance != localInstance) {
@@ -116,10 +110,7 @@ class UPFunctions extends UnifiedPushFunctions {
   @override
   Future<void> registerApp(String instance) async {
     debugPrint("Calling registerApp");
-    await UnifiedPush.register(
-      instance: instance,
-      features: features,
-    );
+    await UnifiedPush.register(instance: instance, features: features);
   }
 
   @override
@@ -148,8 +139,10 @@ class MyAppState extends State<MyApp> {
   Future<void> _isAndroidPermissionGranted() async {
     if (Platform.isAndroid) {
       final AndroidFlutterLocalNotificationsPlugin? androidImplementation =
-          flutterLocalNotificationsPlugin.resolvePlatformSpecificImplementation<
-              AndroidFlutterLocalNotificationsPlugin>();
+          flutterLocalNotificationsPlugin
+              .resolvePlatformSpecificImplementation<
+                AndroidFlutterLocalNotificationsPlugin
+              >();
 
       await androidImplementation?.requestNotificationsPermission();
     }
@@ -172,20 +165,19 @@ class HomePage extends StatefulWidget {
   static const routeName = '/';
   final VoidCallback onPressed;
 
-  const HomePage({
-    required this.onPressed,
-    super.key,
-  });
+  const HomePage({required this.onPressed, super.key});
 
   @override
   State<HomePage> createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> {
-  TextEditingController title =
-      TextEditingController(text: "Notification Title");
-  TextEditingController message =
-      TextEditingController(text: "Notification Body");
+  TextEditingController title = TextEditingController(
+    text: "Notification Title",
+  );
+  TextEditingController message = TextEditingController(
+    text: "Notification Body",
+  );
 
   @override
   void dispose() {
@@ -196,9 +188,11 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> notify() async {
-    final resp = await http.post(Uri.parse(endpoint.url),
-        headers: {"content-encoding": "aes128gcm", "ttl": "5"},
-        body: "title=${title.text}&message=${message.text}&priority=6");
+    final resp = await http.post(
+      Uri.parse(endpoint.url),
+      headers: {"content-encoding": "aes128gcm", "ttl": "5"},
+      body: "title=${title.text}&message=${message.text}&priority=6",
+    );
     debugPrint("resp: ${resp.statusCode}");
   }
 
@@ -233,11 +227,13 @@ class _HomePageState extends State<HomePage> {
        */
       registerWithDefault(
         UnifiedPushUi(
-            context: context,
-            instances: [localInstance],
-            unifiedPushFunctions: UPFunctions(),
-            showNoDistribDialog: showNoDistribDialog,
-            onNoDistribDialogDismissed: () { showNoDistribDialog = false; }
+          context: context,
+          instances: [localInstance],
+          unifiedPushFunctions: UPFunctions(),
+          showNoDistribDialog: showNoDistribDialog,
+          onNoDistribDialogDismissed: () {
+            showNoDistribDialog = false;
+          },
         ),
       );
 
@@ -271,7 +267,9 @@ class _HomePageState extends State<HomePage> {
       child: Text(
         url,
         style: const TextStyle(
-            decoration: TextDecoration.underline, color: Colors.blue),
+          decoration: TextDecoration.underline,
+          color: Colors.blue,
+        ),
       ),
     );
   }
@@ -279,10 +277,7 @@ class _HomePageState extends State<HomePage> {
   void showToast(BuildContext context, String text) {
     final scaffold = ScaffoldMessenger.of(context);
     scaffold.showSnackBar(
-      SnackBar(
-        content: Text(text),
-        duration: const Duration(seconds: 1),
-      ),
+      SnackBar(content: Text(text), duration: const Duration(seconds: 1)),
     );
   }
 
@@ -304,22 +299,18 @@ class _HomePageState extends State<HomePage> {
               ),
               if (registered) ...[
                 ElevatedButton(
-                    child: const Text("Unregister"),
-                    onPressed: () async {
-                      UnifiedPush.unregister(localInstance);
-                      registered = false;
-                      widget.onPressed();
-                    }),
+                  child: const Text("Unregister"),
+                  onPressed: () async {
+                    UnifiedPush.unregister(localInstance);
+                    registered = false;
+                    widget.onPressed();
+                  },
+                ),
                 if (key == null) ...[
                   SelectableText("Endpoint: ${endpoint.url}"),
                 ],
-                if (key != null) ...[
-                  linkTo(context, testPage(endpoint)),
-                ],
-                ElevatedButton(
-                  onPressed: notify,
-                  child: const Text("Notify"),
-                ),
+                if (key != null) ...[linkTo(context, testPage(endpoint))],
+                ElevatedButton(onPressed: notify, child: const Text("Notify")),
                 TextField(
                   controller: title,
                   decoration: const InputDecoration(
