@@ -286,13 +286,17 @@ class _HomePageState extends State<HomePage> {
     final key = endpoint.pubKeySet;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Unifiedpush Troubleshooter')),
+      appBar:
+          Platform.isAndroid
+              ? AppBar(title: const Text('Unifiedpush Troubleshooter'))
+              : null,
       body: Center(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20.0),
           child: Column(
             spacing: 10,
             children: [
+              if (!Platform.isAndroid) ...[const SizedBox(height: 10)],
               ElevatedButton(
                 child: Text(registered ? 'Re-register' : "Register"),
                 onPressed: () => register(),
