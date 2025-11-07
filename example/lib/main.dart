@@ -93,6 +93,12 @@ const linuxAppName = "org.unifiedpush.Troubleshooter";
 var endpoint = PushEndpoint("undefined", null);
 var registered = false;
 var showNoDistribDialog = true;
+var nServices = 0;
+var distrib = "";
+var distributors = [];
+var testPushReceived = false;
+var nPush = 0;
+var nPushBg = 0;
 
 class UPFunctions extends UnifiedPushFunctions {
   final List<String> features = [/*list of features*/];
@@ -148,7 +154,12 @@ class MyAppState extends State<MyApp> {
     }
   }
 
-  void refresh() {
+  void refresh() async {
+    distributors =
+        (await UnifiedPush.getDistributors()) +
+        ["org.unifiedpush.Distributor.Test"];
+    nServices = distributors.length;
+    distrib = (await UnifiedPush.getDistributor()) ?? "";
     setState(() {});
   }
 
@@ -291,44 +302,67 @@ class _HomePageState extends State<HomePage> {
               ? AppBar(title: const Text('Unifiedpush Troubleshooter'))
               : null,
       body: Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20.0),
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 600),
+          width: double.infinity,
+          padding: const EdgeInsets.all(20),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             spacing: 10,
             children: [
-              if (!Platform.isAndroid) ...[const SizedBox(height: 10)],
-              ElevatedButton(
-                child: Text(registered ? 'Re-register' : "Register"),
-                onPressed: () => register(),
-              ),
-              if (registered) ...[
-                ElevatedButton(
-                  child: const Text("Unregister"),
-                  onPressed: () async {
-                    UnifiedPush.unregister(localInstance);
-                    registered = false;
-                    widget.onPressed();
-                  },
+              label(context, "Visible Push Services"),
+              if (distributors.isEmpty) ...[
+                detail("No service found", ""),
+                const SizedBox(height: 8),
+                cardList(
+                  children: [
+                    cardContent(
+                      context,
+                      CardData(label: "Open UnifiedPush documentation"),
+                    ),
+                  ],
                 ),
-                if (key == null) ...[
-                  SelectableText("Endpoint: ${endpoint.url}"),
-                ],
-                if (key != null) ...[linkTo(context, testPage(endpoint))],
-                ElevatedButton(onPressed: notify, child: const Text("Notify")),
-                TextField(
-                  controller: title,
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                    hintText: 'Enter a title',
-                  ),
+              ],
+              if (distributors.isNotEmpty) ...[
+                cardList(
+                  children:
+                      distributors.map((d) {
+                        final connected = d == distrib;
+                        return cardContent(
+                          context,
+                          CardData(
+                            label: d,
+                            desc: connected ? "Connected" : null,
+                            rightWidgets: [
+                              if (connected) ...[
+                                ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    elevation: 0,
+                                    shadowColor: Colors.transparent,
+                                  ),
+                                  onPressed: () {},
+                                  child: const Text('Disconnect'),
+                                ),
+                              ],
+                            ],
+                          ),
+                        );
+                      }).toList(),
                 ),
-                TextField(
-                  controller: message,
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                    hintText: 'Enter a body',
-                  ),
+                const SizedBox(height: 8),
+                cardList(
+                  children: [
+                    cardContent(context, CardData(label: "Send test")),
+                    cardContent(context, CardData(label: "Open test page")),
+                  ],
                 ),
+                const SizedBox(height: 8),
+                label(context, "Details"),
+                detail("Distributor", distrib),
+                detail("Endpoint", registered ? endpoint.url : ""),
+                detail("Test received", "$testPushReceived"),
+                detail("Received", "$nPush"),
+                detail("From background", "$nPushBg"),
               ],
             ],
           ),
@@ -336,6 +370,115 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
+}
+
+class CardData {
+  String label;
+  String? desc;
+  List<Widget> rightWidgets = [];
+  CardData({required this.label, this.desc, this.rightWidgets = const []});
+}
+
+Widget cardContent(BuildContext context, CardData data) {
+  return Row(
+    children: [
+      data.desc == null
+          ? Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // compensate bodyMedium + SizedBox for desc = 14+4 = 18
+              const SizedBox(height: 8),
+              Text(
+                data.label,
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(height: 10),
+            ],
+          )
+          : Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                data.label,
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                data.desc ?? "Error",
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: Colors.black54),
+              ),
+            ],
+          ),
+      const Spacer(),
+      ...data.rightWidgets,
+    ],
+  );
+}
+
+Widget cardList({required List<Widget> children}) {
+  return Column(
+    children:
+        children.asMap().entries.map((entry) {
+          final i = entry.key;
+          final v = entry.value;
+          final isFirst = i == 0;
+          final isLast = i == children.length - 1;
+          return Card(
+            elevation: 2,
+            margin: const EdgeInsets.only(bottom: 1),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.vertical(
+                top: isFirst ? const Radius.circular(12) : Radius.zero,
+                bottom: isLast ? const Radius.circular(12) : Radius.zero,
+              ),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+              child: v,
+            ),
+          );
+        }).toList(),
+  );
+}
+
+Widget detail(String label, String value) {
+  return Row(
+    children: [
+      Expanded(
+        flex: 10,
+        child: Align(
+          alignment: Alignment.centerRight,
+          child: Text(
+            style: const TextStyle(
+              fontWeight: FontWeight.w500,
+              color: Colors.black54,
+            ),
+            label,
+          ),
+        ),
+      ),
+      const Expanded(flex: 1, child: Spacer()),
+      Expanded(
+        flex: 19,
+        child: Text(maxLines: 2, overflow: TextOverflow.ellipsis, value),
+      ),
+    ],
+  );
+}
+
+Widget label(BuildContext context, String data) {
+  return Text(
+    data,
+    style: Theme.of(
+      context,
+    ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold),
+  );
 }
 
 String testPage(PushEndpoint endpoint) {
