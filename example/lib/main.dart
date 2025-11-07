@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -27,11 +28,13 @@ Future<void> main(List<String> args) async {
 }
 
 class UnifiedPushConnection {
+  var bg = false;
   void _onUpdate() {
     controller.add("update");
   }
 
   void init(bool background) {
+    bg = background;
     UnifiedPush.initialize(
       onNewEndpoint: onNewEndpoint,
       // takes (String endpoint, String instance) in args
@@ -39,7 +42,7 @@ class UnifiedPushConnection {
       // takes (String instance)
       onUnregistered: onUnregistered,
       // takes (String instance)
-      onMessage: UPNotificationUtils.basicOnNotification,
+      onMessage: onMessage,
       linuxOptions: LinuxOptions(
         dbusName: linuxAppName,
         storage: UnifiedPushStorageSharedPreferences(),
@@ -50,6 +53,14 @@ class UnifiedPushConnection {
         UnifiedPush.register(instance: localInstance);
       }
     });
+  }
+
+  void onMessage(PushMessage message, String instance) {
+    nPush++;
+    if (bg) nPushBg++;
+    if (utf8.decode(message.content) == testNotif) testPushReceived = true;
+    _onUpdate();
+    UPNotificationUtils.basicOnNotification(message, instance);
   }
 
   void onNewEndpoint(PushEndpoint nEndpoint, String instance) {
@@ -96,6 +107,7 @@ var distributors = [];
 var testPushReceived = false;
 var nPush = 0;
 var nPushBg = 0;
+const testNotif = "org.unifiedpush.TEST_NOTIF";
 
 class UPFunctions extends UnifiedPushFunctions {
   final List<String> features = [/*list of features*/];
@@ -192,21 +204,6 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  TextEditingController title = TextEditingController(
-    text: "Notification Title",
-  );
-  TextEditingController message = TextEditingController(
-    text: "Notification Body",
-  );
-
-  @override
-  void dispose() {
-    title.dispose();
-    message.dispose();
-
-    super.dispose();
-  }
-
   Future<void> notify() async {
     final e = endpoint;
     if (e == null) {
@@ -216,7 +213,7 @@ class _HomePageState extends State<HomePage> {
     final resp = await http.post(
       Uri.parse(e.url),
       headers: {"content-encoding": "aes128gcm", "ttl": "5"},
-      body: "title=${title.text}&message=${message.text}&priority=6",
+      body: testNotif,
     );
     debugPrint("resp: ${resp.statusCode}");
   }
@@ -371,7 +368,10 @@ class _HomePageState extends State<HomePage> {
                       ),
                       register,
                     ),
-                    (cardContent(context, CardData(label: "Send test")), null),
+                    (
+                      cardContent(context, CardData(label: "Send test")),
+                      notify,
+                    ),
                     (
                       cardContent(context, CardData(label: "Open test page")),
                       null,
