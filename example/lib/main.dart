@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -57,11 +56,10 @@ class UnifiedPushConnection {
     if (instance != localInstance) {
       return;
     }
-    registered = true;
     endpoint = nEndpoint;
-    debugPrint("New endpoint on ${this.hashCode}");
-    debugPrint("Endpoint (temp=${endpoint.temporary}): ${endpoint.url}");
-    debugPrint("To test: ${testPage(endpoint)}");
+    debugPrint("New endpoint on $hashCode");
+    debugPrint("Endpoint (temp=${nEndpoint.temporary}): ${nEndpoint.url}");
+    debugPrint("To test: ${testPage(nEndpoint)}");
     _onUpdate();
   }
 
@@ -69,7 +67,7 @@ class UnifiedPushConnection {
     if (instance != localInstance) {
       return;
     }
-    registered = false;
+    endpoint = null;
     debugPrint("unregistered");
     _onUpdate();
   }
@@ -90,11 +88,10 @@ const localInstance = "myInstance";
 // Because of this it needs to be a valid fully-qualified name
 const linuxAppName = "org.unifiedpush.Troubleshooter";
 
-var endpoint = PushEndpoint("undefined", null);
-var registered = false;
+PushEndpoint? endpoint;
 var showNoDistribDialog = true;
 var nServices = 0;
-var distrib = "";
+String? distrib;
 var distributors = [];
 var testPushReceived = false;
 var nPush = 0;
@@ -123,6 +120,10 @@ class UPFunctions extends UnifiedPushFunctions {
   Future<void> saveDistributor(String distributor) async {
     await UnifiedPush.saveDistributor(distributor);
   }
+
+  Future<void> unregister(String instance) async {
+    await UnifiedPush.unregister(instance);
+  }
 }
 
 class MyApp extends StatefulWidget {
@@ -139,6 +140,7 @@ class MyAppState extends State<MyApp> {
       debugPrint("Exception while granting permissions");
     });
     controller.stream.listen((_) => refresh());
+    refresh();
     super.initState();
   }
 
@@ -155,18 +157,25 @@ class MyAppState extends State<MyApp> {
   }
 
   void refresh() async {
+    debugPrint("Refreshing values");
     distributors =
         (await UnifiedPush.getDistributors()) +
         ["org.unifiedpush.Distributor.Test"];
     nServices = distributors.length;
-    distrib = (await UnifiedPush.getDistributor()) ?? "";
+    distrib = (await UnifiedPush.getDistributor());
+    if (distrib == null) {
+      endpoint = null;
+      testPushReceived = false;
+      nPush = 0;
+      nPushBg = 0;
+    }
     setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      routes: {HomePage.routeName: (context) => HomePage(onPressed: refresh)},
+      routes: {HomePage.routeName: (context) => HomePage(refresh: refresh)},
       builder: EasyLoading.init(),
     );
   }
@@ -174,9 +183,9 @@ class MyAppState extends State<MyApp> {
 
 class HomePage extends StatefulWidget {
   static const routeName = '/';
-  final VoidCallback onPressed;
+  final VoidCallback refresh;
 
-  const HomePage({required this.onPressed, super.key});
+  const HomePage({required this.refresh, super.key});
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -199,44 +208,25 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> notify() async {
+    final e = endpoint;
+    if (e == null) {
+      debugPrint("Can't request unknown endpoint");
+      return;
+    }
     final resp = await http.post(
-      Uri.parse(endpoint.url),
+      Uri.parse(e.url),
       headers: {"content-encoding": "aes128gcm", "ttl": "5"},
       body: "title=${title.text}&message=${message.text}&priority=6",
     );
     debugPrint("resp: ${resp.statusCode}");
   }
 
-  String myPickerFunc(List<String> distributors) {
-    // Do not do a random func, this is an example.
-    // You should do a context menu/dialog here
-    Random rand = Random();
-    final max = distributors.length;
-    final index = rand.nextInt(max);
-    return distributors[index];
-  }
-
-  void registerWithDefault(UnifiedPushUi upDialogs) {
+  void register() async {
     UnifiedPush.tryUseCurrentOrDefaultDistributor().then((success) {
       debugPrint("Current or Default found=$success");
       if (success) {
         UnifiedPush.register(instance: localInstance);
       } else {
-        upDialogs.registerAppWithDialog();
-      }
-    });
-  }
-
-  void register() async {
-    if (registered) {
-      UPFunctions().registerApp(localInstance);
-    } else {
-      /**
-       * Registration
-       * Option 1:  Use the default distributor picker
-       *            which uses a dialog
-       */
-      registerWithDefault(
         UnifiedPushUi(
           context: context,
           instances: [localInstance],
@@ -245,27 +235,9 @@ class _HomePageState extends State<HomePage> {
           onNoDistribDialogDismissed: () {
             showNoDistribDialog = false;
           },
-        ),
-      );
-
-      /**
-       * Registration
-       * Option 2: Do your own function to pick the distrib
-       */
-      /*
-      if (await UnifiedPush.tryUseCurrentOrDefaultDistributor()) {
-        UnifiedPush.registerApp(instance);
-      } else {
-        final distributors = await UnifiedPush.getDistributors();
-        if (distributors.length == 0) {
-          return;
-        }
-        final distributor = myPickerFunc(distributors);
-        UnifiedPush.saveDistributor(distributor);
-        UnifiedPush.registerApp(instance);
+        ).registerAppWithDialog();
       }
-    */
-    }
+    });
   }
 
   Widget linkTo(BuildContext context, String url) {
@@ -294,8 +266,7 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    final key = endpoint.pubKeySet;
-
+    final up = UPFunctions();
     return Scaffold(
       appBar:
           Platform.isAndroid
@@ -316,9 +287,19 @@ class _HomePageState extends State<HomePage> {
                 const SizedBox(height: 8),
                 cardList(
                   children: [
-                    cardContent(
-                      context,
-                      CardData(label: "Open UnifiedPush documentation"),
+                    (
+                      cardContent(
+                        context,
+                        CardData(label: "Refresh service list"),
+                      ),
+                      widget.refresh,
+                    ),
+                    (
+                      cardContent(
+                        context,
+                        CardData(label: "Open UnifiedPush documentation"),
+                      ),
+                      null,
                     ),
                   ],
                 ),
@@ -328,40 +309,81 @@ class _HomePageState extends State<HomePage> {
                   children:
                       distributors.map((d) {
                         final connected = d == distrib;
-                        return cardContent(
-                          context,
-                          CardData(
-                            label: d,
-                            desc: connected ? "Connected" : null,
-                            rightWidgets: [
-                              if (connected) ...[
-                                ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                    elevation: 0,
-                                    shadowColor: Colors.transparent,
+                        return (
+                          cardContent(
+                            context,
+                            CardData(
+                              label: d,
+                              desc: connected ? "Connected" : null,
+                              rightWidgets: [
+                                if (connected) ...[
+                                  ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                      elevation: 0,
+                                      shadowColor: Colors.transparent,
+                                    ),
+                                    onPressed: () {
+                                      up.unregister(localInstance).then((_) {
+                                        widget.refresh();
+                                      });
+                                    },
+                                    child: const Text('Disconnect'),
                                   ),
-                                  onPressed: () {},
-                                  child: const Text('Disconnect'),
-                                ),
+                                ],
                               ],
-                            ],
+                            ),
                           ),
+                          () {
+                            up
+                                .unregister(localInstance)
+                                .then((_) {
+                                  return up.saveDistributor(d);
+                                })
+                                .then((_) {
+                                  return UPFunctions().registerApp(
+                                    localInstance,
+                                  );
+                                })
+                                .then((_) {
+                                  widget.refresh();
+                                });
+                          },
                         );
                       }).toList(),
                 ),
                 const SizedBox(height: 8),
                 cardList(
                   children: [
-                    cardContent(context, CardData(label: "Send test")),
-                    cardContent(context, CardData(label: "Open test page")),
+                    (
+                      cardContent(
+                        context,
+                        CardData(label: "Refresh service list"),
+                      ),
+                      widget.refresh,
+                    ),
+                    (
+                      cardContent(
+                        context,
+                        CardData(
+                          label: "Use default service",
+                          desc: "Open a dialog without default",
+                        ),
+                      ),
+                      register,
+                    ),
+                    (cardContent(context, CardData(label: "Send test")), null),
+                    (
+                      cardContent(context, CardData(label: "Open test page")),
+                      null,
+                    ),
                   ],
                 ),
                 const SizedBox(height: 8),
                 label(context, "Details"),
-                detail("Distributor", distrib),
-                detail("Endpoint", registered ? endpoint.url : ""),
+                detail("Distributor", distrib ?? ""),
+                detail("Endpoint", endpoint?.url ?? ""),
                 detail("Test received", "$testPushReceived"),
-                detail("Received", "$nPush"),
+                detail("Push received", "$nPush"),
                 detail("From background", "$nPushBg"),
               ],
             ],
@@ -421,7 +443,7 @@ Widget cardContent(BuildContext context, CardData data) {
   );
 }
 
-Widget cardList({required List<Widget> children}) {
+Widget cardList({required List<(Widget, void Function()?)> children}) {
   return Column(
     children:
         children.asMap().entries.map((entry) {
@@ -438,9 +460,16 @@ Widget cardList({required List<Widget> children}) {
                 bottom: isLast ? const Radius.circular(12) : Radius.zero,
               ),
             ),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-              child: v,
+            clipBehavior: Clip.antiAlias,
+            child: InkWell(
+              onTap: v.$2,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  vertical: 8,
+                  horizontal: 16,
+                ),
+                child: v.$1,
+              ),
             ),
           );
         }).toList(),
