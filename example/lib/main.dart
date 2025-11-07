@@ -419,44 +419,47 @@ class CardData {
 }
 
 Widget cardContent(BuildContext context, CardData data) {
-  return Row(
-    children: [
-      data.desc == null
-          ? Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // compensate bodyMedium + SizedBox for desc = 14+4 = 18
-              const SizedBox(height: 8),
-              Text(
-                data.label,
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500),
-              ),
-              const SizedBox(height: 10),
-            ],
-          )
-          : Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                data.label,
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                data.desc ?? "Error",
-                style: Theme.of(
-                  context,
-                ).textTheme.bodySmall?.copyWith(color: Colors.black54),
-              ),
-            ],
-          ),
-      const Spacer(),
-      ...data.rightWidgets,
-    ],
+  return SizedBox(
+    width: double.infinity,
+    child: Wrap(
+      alignment: WrapAlignment.spaceBetween,
+      children: [
+        data.desc == null
+            ? Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // compensate bodyMedium + SizedBox for desc = 14+4 = 18
+                const SizedBox(height: 8),
+                Text(
+                  data.label,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500),
+                ),
+                const SizedBox(height: 10),
+              ],
+            )
+            : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  data.label,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  data.desc ?? "Error",
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(color: Colors.black54),
+                ),
+              ],
+            ),
+        ...data.rightWidgets,
+      ],
+    ),
   );
 }
 
