@@ -252,156 +252,158 @@ class _HomePageState extends State<HomePage> {
           Platform.isAndroid
               ? AppBar(title: const Text('Unifiedpush Troubleshooter'))
               : null,
-      body: Center(
-        child: Container(
-          constraints: const BoxConstraints(maxWidth: 600),
-          width: double.infinity,
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            spacing: 10,
-            children: [
-              label(context, "Visible Push Services"),
-              if (distributors.isEmpty) ...[
-                detail("No service found", ""),
-                const SizedBox(height: 8),
-                cardList(
-                  children: [
-                    (
-                      cardContent(
-                        context,
-                        CardData(label: "Refresh service list"),
+      body: SingleChildScrollView(
+        child: Center(
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 600),
+            width: double.infinity,
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              spacing: 10,
+              children: [
+                label(context, "Visible Push Services"),
+                if (distributors.isEmpty) ...[
+                  detail("No service found", ""),
+                  const SizedBox(height: 8),
+                  cardList(
+                    children: [
+                      (
+                        cardContent(
+                          context,
+                          CardData(label: "Refresh service list"),
+                        ),
+                        widget.refresh,
                       ),
-                      widget.refresh,
-                    ),
-                    (
-                      cardContent(
-                        context,
-                        CardData(label: "Open UnifiedPush documentation"),
+                      (
+                        cardContent(
+                          context,
+                          CardData(label: "Open UnifiedPush documentation"),
+                        ),
+                        () {
+                          launchUrl(
+                            Uri.parse(
+                              "https://unifiedpush.org/users/distributors/",
+                            ),
+                          );
+                        },
                       ),
-                      () {
-                        launchUrl(
-                          Uri.parse(
-                            "https://unifiedpush.org/users/distributors/",
-                          ),
-                        );
-                      },
-                    ),
-                  ],
-                ),
-              ],
-              if (distributors.isNotEmpty) ...[
-                cardList(
-                  children:
-                      distributors.map((d) {
-                        final connected = d == distrib;
-                        return (
-                          cardContent(
-                            context,
-                            CardData(
-                              label: d,
-                              desc: connected ? "Connected" : null,
-                              rightWidgets: [
-                                if (connected) ...[
-                                  ElevatedButton(
-                                    style: ElevatedButton.styleFrom(
-                                      elevation: 0,
-                                      shadowColor: Colors.transparent,
+                    ],
+                  ),
+                ],
+                if (distributors.isNotEmpty) ...[
+                  cardList(
+                    children:
+                        distributors.map((d) {
+                          final connected = d == distrib;
+                          return (
+                            cardContent(
+                              context,
+                              CardData(
+                                label: d,
+                                desc: connected ? "Connected" : null,
+                                rightWidgets: [
+                                  if (connected) ...[
+                                    ElevatedButton(
+                                      style: ElevatedButton.styleFrom(
+                                        elevation: 0,
+                                        shadowColor: Colors.transparent,
+                                      ),
+                                      onPressed: () {
+                                        up.unregister(localInstance).then((_) {
+                                          widget.refresh();
+                                        });
+                                      },
+                                      child: const Text('Disconnect'),
                                     ),
-                                    onPressed: () {
-                                      up.unregister(localInstance).then((_) {
-                                        widget.refresh();
-                                      });
-                                    },
-                                    child: const Text('Disconnect'),
-                                  ),
+                                  ],
                                 ],
-                              ],
-                            ),
-                          ),
-                          () {
-                            up
-                                .unregister(localInstance)
-                                .then((_) {
-                                  return up.saveDistributor(d);
-                                })
-                                .then((_) {
-                                  return UPFunctions().registerApp(
-                                    localInstance,
-                                  );
-                                })
-                                .then((_) {
-                                  widget.refresh();
-                                });
-                          },
-                        );
-                      }).toList(),
-                ),
-                const SizedBox(height: 8),
-                cardList(
-                  children: [
-                    (
-                      cardContent(
-                        context,
-                        CardData(label: "Refresh service list"),
-                      ),
-                      widget.refresh,
-                    ),
-                    (
-                      cardContent(
-                        context,
-                        CardData(
-                          label: "Use default service",
-                          desc: "Open a dialog without default",
-                        ),
-                      ),
-                      register,
-                    ),
-                    (
-                      cardContent(context, CardData(label: "Send test")),
-                      notify,
-                    ),
-                    (
-                      cardContent(
-                        context,
-                        CardData(
-                          label: "Open test page",
-                          rightWidgets: [
-                            ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                elevation: 0,
-                                shadowColor: Colors.transparent,
                               ),
-                              onPressed: () {
-                                final e = endpoint;
-                                if (e != null) {
-                                  Clipboard.setData(
-                                    ClipboardData(text: testPage(e)),
-                                  );
-                                  showToast(context, "URL Copied");
-                                }
-                              },
-                              child: const Text('Copy'),
                             ),
-                          ],
+                            () {
+                              up
+                                  .unregister(localInstance)
+                                  .then((_) {
+                                    return up.saveDistributor(d);
+                                  })
+                                  .then((_) {
+                                    return UPFunctions().registerApp(
+                                      localInstance,
+                                    );
+                                  })
+                                  .then((_) {
+                                    widget.refresh();
+                                  });
+                            },
+                          );
+                        }).toList(),
+                  ),
+                  const SizedBox(height: 8),
+                  cardList(
+                    children: [
+                      (
+                        cardContent(
+                          context,
+                          CardData(label: "Refresh service list"),
                         ),
+                        widget.refresh,
                       ),
-                      () {
-                        final e = endpoint;
-                        if (e != null) launchUrl(Uri.parse(testPage(e)));
-                      },
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                label(context, "Details"),
-                detail("Distributor", distrib ?? ""),
-                detail("Endpoint", endpoint?.url ?? ""),
-                detail("Test received", "$testPushReceived"),
-                detail("Push received", "$nPush"),
-                detail("From background", "$nPushBg"),
+                      (
+                        cardContent(
+                          context,
+                          CardData(
+                            label: "Use default service",
+                            desc: "Open a dialog without default",
+                          ),
+                        ),
+                        register,
+                      ),
+                      (
+                        cardContent(context, CardData(label: "Send test")),
+                        notify,
+                      ),
+                      (
+                        cardContent(
+                          context,
+                          CardData(
+                            label: "Open test page",
+                            rightWidgets: [
+                              ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  elevation: 0,
+                                  shadowColor: Colors.transparent,
+                                ),
+                                onPressed: () {
+                                  final e = endpoint;
+                                  if (e != null) {
+                                    Clipboard.setData(
+                                      ClipboardData(text: testPage(e)),
+                                    );
+                                    showToast(context, "URL Copied");
+                                  }
+                                },
+                                child: const Text('Copy'),
+                              ),
+                            ],
+                          ),
+                        ),
+                        () {
+                          final e = endpoint;
+                          if (e != null) launchUrl(Uri.parse(testPage(e)));
+                        },
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  label(context, "Details"),
+                  detail("Distributor", distrib ?? ""),
+                  detail("Endpoint", endpoint?.url ?? ""),
+                  detail("Test received", "$testPushReceived"),
+                  detail("Push received", "$nPush"),
+                  detail("From background", "$nPushBg"),
+                ],
               ],
-            ],
+            ),
           ),
         ),
       ),
