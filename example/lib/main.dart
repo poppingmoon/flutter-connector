@@ -237,23 +237,6 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  Widget linkTo(BuildContext context, String url) {
-    return InkWell(
-      onTap: () => launchUrl(Uri.parse(url)),
-      onLongPress: () {
-        Clipboard.setData(ClipboardData(text: url));
-        showToast(context, "URL Copied");
-      },
-      child: Text(
-        url,
-        style: const TextStyle(
-          decoration: TextDecoration.underline,
-          color: Colors.blue,
-        ),
-      ),
-    );
-  }
-
   void showToast(BuildContext context, String text) {
     final scaffold = ScaffoldMessenger.of(context);
     scaffold.showSnackBar(
@@ -296,7 +279,13 @@ class _HomePageState extends State<HomePage> {
                         context,
                         CardData(label: "Open UnifiedPush documentation"),
                       ),
-                      null,
+                      () {
+                        launchUrl(
+                          Uri.parse(
+                            "https://unifiedpush.org/users/distributors/",
+                          ),
+                        );
+                      },
                     ),
                   ],
                 ),
@@ -373,8 +362,34 @@ class _HomePageState extends State<HomePage> {
                       notify,
                     ),
                     (
-                      cardContent(context, CardData(label: "Open test page")),
-                      null,
+                      cardContent(
+                        context,
+                        CardData(
+                          label: "Open test page",
+                          rightWidgets: [
+                            ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                elevation: 0,
+                                shadowColor: Colors.transparent,
+                              ),
+                              onPressed: () {
+                                final e = endpoint;
+                                if (e != null) {
+                                  Clipboard.setData(
+                                    ClipboardData(text: testPage(e)),
+                                  );
+                                  showToast(context, "URL Copied");
+                                }
+                              },
+                              child: const Text('Copy'),
+                            ),
+                          ],
+                        ),
+                      ),
+                      () {
+                        final e = endpoint;
+                        if (e != null) launchUrl(Uri.parse(testPage(e)));
+                      },
                     ),
                   ],
                 ),
