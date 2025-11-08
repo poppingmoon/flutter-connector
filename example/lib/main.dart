@@ -334,15 +334,20 @@ class _HomePageState extends State<HomePage> {
                   cardList(
                     children:
                         distributors.map((d) {
-                          final connected = d == distrib;
+                          final selected = d == distrib;
                           return (
                             cardContent(
                               context,
                               CardData(
                                 label: d,
-                                desc: connected ? "Connected" : null,
+                                desc:
+                                    selected
+                                        ? (endpoint == null
+                                            ? "Connecting..."
+                                            : "Connected")
+                                        : null,
                                 rightWidgets: [
-                                  if (connected) ...[
+                                  if (selected) ...[
                                     ElevatedButton(
                                       style: ElevatedButton.styleFrom(
                                         elevation: 0,
