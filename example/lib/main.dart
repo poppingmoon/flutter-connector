@@ -4,14 +4,16 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:unifiedpush/unifiedpush.dart';
 import 'package:unifiedpush_platform_interface/unifiedpush_platform_interface.dart';
 import 'package:unifiedpush_storage_shared_preferences/storage.dart';
 import 'package:unifiedpush_ui/unifiedpush_ui.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:http/http.dart' as http;
-import 'package:flutter_easyloading/flutter_easyloading.dart';
+
 import 'notification_utils.dart';
 
 Future<void> main(List<String> args) async {
@@ -56,10 +58,23 @@ class UnifiedPushConnection {
   }
 
   void onMessage(PushMessage message, String instance) {
-    nPush++;
-    if (bg) nPushBg++;
-    if (utf8.decode(message.content) == testNotif) testPushReceived = true;
-    _onUpdate();
+    Future.wait([
+      SharedPreferencesAsync().setInt(keyNPush, nPush + 1).then((_) {
+        nPush++;
+      }),
+      if (bg) ...[
+        SharedPreferencesAsync().setInt(keyNPushBg, nPushBg + 1).then((_) {
+          nPushBg++;
+        }),
+      ],
+      if (utf8.decode(message.content) == testNotif) ...[
+        SharedPreferencesAsync().setBool(keyTestPushReceived, true).then((_) {
+          testPushReceived = true;
+        }),
+      ],
+    ]).then((_) {
+      _onUpdate();
+    });
     UPNotificationUtils.basicOnNotification(message, instance);
   }
 
@@ -101,13 +116,15 @@ const linuxAppName = "org.unifiedpush.Troubleshooter";
 
 PushEndpoint? endpoint;
 var showNoDistribDialog = true;
-var nServices = 0;
 String? distrib;
 var distributors = [];
 var testPushReceived = false;
 var nPush = 0;
 var nPushBg = 0;
 const testNotif = "org.unifiedpush.TEST_NOTIF";
+const keyNPush = "org.unifiedpush.key.nPush";
+const keyNPushBg = "org.unifiedpush.key.nPushBg";
+const keyTestPushReceived = "org.unifiedpush.key.testPushReceived";
 
 class UPFunctions extends UnifiedPushFunctions {
   final List<String> features = [/*list of features*/];
@@ -170,16 +187,38 @@ class MyAppState extends State<MyApp> {
 
   void refresh() async {
     debugPrint("Refreshing values");
-    distributors =
-        (await UnifiedPush.getDistributors()) +
-        ["org.unifiedpush.Distributor.Test"];
-    nServices = distributors.length;
     distrib = (await UnifiedPush.getDistributor());
     if (distrib == null) {
       endpoint = null;
-      testPushReceived = false;
-      nPush = 0;
-      nPushBg = 0;
+      await Future.wait([
+        UnifiedPush.getDistributors().then((v) {
+          distributors = v + ["org.unifiedpush.Distributor.Test"];
+        }),
+        SharedPreferencesAsync().remove(keyNPush).then((_) {
+          nPush = 0;
+        }),
+        SharedPreferencesAsync().remove(keyNPushBg).then((_) {
+          nPushBg = 0;
+        }),
+        SharedPreferencesAsync().remove(keyTestPushReceived).then((_) {
+          testPushReceived = false;
+        }),
+      ]);
+    } else {
+      await Future.wait([
+        UnifiedPush.getDistributors().then((v) {
+          distributors = v + ["org.unifiedpush.Distributor.Test"];
+        }),
+        SharedPreferencesAsync().getInt(keyNPush).then((v) {
+          nPush = v ?? 0;
+        }),
+        SharedPreferencesAsync().getInt(keyNPushBg).then((v) {
+          nPushBg = v ?? 0;
+        }),
+        SharedPreferencesAsync().getBool(keyTestPushReceived).then((v) {
+          testPushReceived = v ?? false;
+        }),
+      ]);
     }
     setState(() {});
   }
