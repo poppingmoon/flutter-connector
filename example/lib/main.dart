@@ -192,7 +192,7 @@ class MyAppState extends State<MyApp> {
       endpoint = null;
       await Future.wait([
         UnifiedPush.getDistributors().then((v) {
-          distributors = v + ["org.unifiedpush.Distributor.Test"];
+          distributors = v;
         }),
         SharedPreferencesAsync().remove(keyNPush).then((_) {
           nPush = 0;
@@ -207,7 +207,7 @@ class MyAppState extends State<MyApp> {
     } else {
       await Future.wait([
         UnifiedPush.getDistributors().then((v) {
-          distributors = v + ["org.unifiedpush.Distributor.Test"];
+          distributors = v;
         }),
         SharedPreferencesAsync().getInt(keyNPush).then((v) {
           nPush = v ?? 0;
