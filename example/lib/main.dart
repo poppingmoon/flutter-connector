@@ -363,6 +363,9 @@ class _HomePageState extends State<HomePage> {
                               up
                                   .unregister(localInstance)
                                   .then((_) {
+                                    return widget.refresh();
+                                  })
+                                  .then((_) {
                                     return up.saveDistributor(d);
                                   })
                                   .then((_) {
