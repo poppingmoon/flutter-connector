@@ -601,7 +601,7 @@ packages:
       path: "../unifiedpush_linux"
       relative: true
     source: path
-    version: "1.0.0"
+    version: "1.0.1"
   unifiedpush_platform_interface:
     dependency: "direct overridden"
     description:
