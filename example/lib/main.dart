@@ -407,7 +407,7 @@ class _HomePageState extends State<HomePage> {
                       ),
                       (
                         cardContent(context, CardData(label: "Send test")),
-                        notify,
+                        endpoint == null ? null : notify,
                       ),
                       (
                         cardContent(
@@ -415,29 +415,33 @@ class _HomePageState extends State<HomePage> {
                           CardData(
                             label: "Open test page",
                             rightWidgets: [
-                              ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  elevation: 0,
-                                  shadowColor: Colors.transparent,
+                              if (endpoint != null) ...[
+                                ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    elevation: 0,
+                                    shadowColor: Colors.transparent,
+                                  ),
+                                  onPressed: () {
+                                    final e = endpoint;
+                                    if (e != null) {
+                                      Clipboard.setData(
+                                        ClipboardData(text: testPage(e)),
+                                      );
+                                      showToast(context, "URL Copied");
+                                    }
+                                  },
+                                  child: const Text('Copy'),
                                 ),
-                                onPressed: () {
-                                  final e = endpoint;
-                                  if (e != null) {
-                                    Clipboard.setData(
-                                      ClipboardData(text: testPage(e)),
-                                    );
-                                    showToast(context, "URL Copied");
-                                  }
-                                },
-                                child: const Text('Copy'),
-                              ),
+                              ],
                             ],
                           ),
                         ),
-                        () {
-                          final e = endpoint;
-                          if (e != null) launchUrl(Uri.parse(testPage(e)));
-                        },
+                        endpoint == null
+                            ? null
+                            : () {
+                              final e = endpoint;
+                              if (e != null) launchUrl(Uri.parse(testPage(e)));
+                            },
                       ),
                     ],
                   ),
@@ -518,24 +522,27 @@ Widget cardList({required List<(Widget, void Function()?)> children}) {
           final v = entry.value;
           final isFirst = i == 0;
           final isLast = i == children.length - 1;
-          return Card(
-            elevation: 2,
-            margin: const EdgeInsets.only(bottom: 1),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.vertical(
-                top: isFirst ? const Radius.circular(12) : Radius.zero,
-                bottom: isLast ? const Radius.circular(12) : Radius.zero,
-              ),
-            ),
-            clipBehavior: Clip.antiAlias,
-            child: InkWell(
-              onTap: v.$2,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  vertical: 8,
-                  horizontal: 16,
+          return Opacity(
+            opacity: v.$2 == null ? 0.4 : 1,
+            child: Card(
+              elevation: 2,
+              margin: const EdgeInsets.only(bottom: 1),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.vertical(
+                  top: isFirst ? const Radius.circular(12) : Radius.zero,
+                  bottom: isLast ? const Radius.circular(12) : Radius.zero,
                 ),
-                child: v.$1,
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: InkWell(
+                onTap: v.$2,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 8,
+                    horizontal: 16,
+                  ),
+                  child: v.$1,
+                ),
               ),
             ),
           );
