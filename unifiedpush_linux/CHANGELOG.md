@@ -1,3 +1,6 @@
+## 1.0.1
+* Catch DBus exceptions
+
 ## 1.0.0
 * Follow DBUS_0.3.0 specs
 * Auto decryption of push messages

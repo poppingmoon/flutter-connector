@@ -104,16 +104,21 @@ class UnifiedPushLinux extends UnifiedPushPlatform {
           "vapid": DBusString(vapid),
         }
       },
-    );
+    ).catchError((e) {
+      debugPrint("Cannot register to service $e");
+      return <String, DBusValue>{};
+    });
 
     var succeeded = result?["success"]?.asString() == "REGISTRATION_SUCCEEDED";
 
     if (!succeeded) {
-      final reason = RegistrationFailure.values.firstWhere(
+      debugPrint("Registration failed");
+      final reason = RegistrationFailure.values
+          .firstWhere(
               (possibleReason) =>
-          possibleReason.value == result?["reason"]?.asString(),
-          orElse: () => RegistrationFailure.internalError
-      ).toFailedReason();
+                  possibleReason.value == result?["reason"]?.asString(),
+              orElse: () => RegistrationFailure.internalError)
+          .toFailedReason();
       onRegistrationFailed?.call(reason, instance);
     }
   }
@@ -140,6 +145,9 @@ class UnifiedPushLinux extends UnifiedPushPlatform {
     final regLeft = await storage.registrations.remove(instance);
     await _distributor!.callUnregister({
       "token": DBusString(token),
+    }).catchError((e) {
+      debugPrint("Cannot unregister to service $e");
+      return <String, DBusValue>{};
     });
 
     if (!regLeft) {
@@ -163,16 +171,15 @@ class UnifiedPushLinux extends UnifiedPushPlatform {
     }
     _writeDBusService();
     return connector.initializeCallback(
-      onNewEndpoint: onNewEndpoint,
-      onUnregistered: onUnregistered,
-      onMessage: onMessage
-    );
+        onNewEndpoint: onNewEndpoint,
+        onUnregistered: onUnregistered,
+        onMessage: onMessage);
   }
 
   String _getDBusName() {
     var dbusName = _dbusName;
-    assert(dbusName != null,
-    "setDBusName must be called before initialization");
+    assert(
+        dbusName != null, "setDBusName must be called before initialization");
     return dbusName!;
   }
 
@@ -192,14 +199,9 @@ class UnifiedPushLinux extends UnifiedPushPlatform {
         };
       } else {
         // If we are in the foreground, we may replace a background one
-        flags = {
-          DBusRequestNameFlag.replaceExisting
-        };
-    }
-      final reply = await _dbusClient.requestName(
-        _getDBusName(),
-        flags: flags
-      );
+        flags = {DBusRequestNameFlag.replaceExisting};
+      }
+      final reply = await _dbusClient.requestName(_getDBusName(), flags: flags);
       debugPrint("RequestName reply: $reply");
       // So we are in the background, and there is already one existing, we exit
       if (reply == DBusRequestNameReply.exists) {
@@ -219,7 +221,6 @@ class UnifiedPushLinux extends UnifiedPushPlatform {
     await _dbusClient.releaseName(_getDBusName());
     connector.client = null;
     _distributor = null;
-
   }
 
   UnifiedPushStorage _getStorage(String function) {
@@ -230,8 +231,7 @@ class UnifiedPushLinux extends UnifiedPushPlatform {
 
   @override
   Future<void> initializeOnTempUnavailable(
-      void Function(String instance)? onTempUnavailable
-      ) async {
+      void Function(String instance)? onTempUnavailable) async {
     // Do nothing for the moment.
   }
 
@@ -241,7 +241,7 @@ class UnifiedPushLinux extends UnifiedPushPlatform {
       WindowManager.instance.hide();
     }
     assert(options.dbusName.split(".").length >= 3,
-    "The DBus name should be a fully-qualified name (e.g. com.example.App)");
+        "The DBus name should be a fully-qualified name (e.g. com.example.App)");
     _dbusName = options.dbusName;
     _storage = options.storage;
     _background = options.background;
@@ -249,7 +249,8 @@ class UnifiedPushLinux extends UnifiedPushPlatform {
 
   Future<void> _writeDBusService() async {
     final homeDir = Platform.environment['HOME']!;
-    final localShareDir = Directory(p.join(homeDir, '.local', 'share', 'dbus-1', 'services'));
+    final localShareDir =
+        Directory(p.join(homeDir, '.local', 'share', 'dbus-1', 'services'));
     if (!await localShareDir.exists()) {
       await localShareDir.create(recursive: true);
     }
@@ -263,10 +264,10 @@ Name=$_dbusName
 Exec=/bin/sh -c "FLUTTER_HEADLESS=1 $executablePath --unifiedpush-bg"
 ''';
     await conf.writeAsString(content);
-    OrgFreedesktopDBus(_dbusClient).reloadConfig();
+    OrgFreedesktopDBus(_dbusClient).reloadConfig().catchError((e) {
+      debugPrint("Cannot reload DBUS config: $e");
+    });
   }
-
-
 
   void mayExit() {
     if (_background) exit(0);
