@@ -15,9 +15,14 @@ import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.filterNot
+import kotlinx.coroutines.flow.takeWhile
 import kotlinx.coroutines.launch
+import java.util.concurrent.atomic.AtomicInteger
 import org.unifiedpush.android.connector.UnifiedPush as up
 
 /**
@@ -29,12 +34,10 @@ class Plugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     private var job: Job? = null
     private val mainHandler = Handler(Looper.getMainLooper())
     private var pluginChannel: MethodChannel? = null
-    // Allow up to 20 calls during initialization
-    val calls = MutableSharedFlow<Call>(replay = 20)
+    private val pluginId = pluginCounter.getAndIncrement()
 
     init {
-        Log.d(TAG, "Init new Plugin: $this")
-        Plugin.calls = calls
+        Log.d(TAG, "Init new Plugin: ${this.hashCode()}")
     }
 
     /**
@@ -129,17 +132,43 @@ class Plugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     }
     */
 
+    private fun Call.pluginId() = this.data[PLUGIN_ARG_PLUGINID] as Int? ?: 0
+
     private fun onInitialized(result: MethodChannel.Result) {
         // job = CoroutineScope(Dispatchers.IO + SupervisorJob()).launch {
         job = CoroutineScope(dispatcher).launch {
-            Log.d(TAG, "onInitialized, collecting calls")
-            calls.collect {
+            // We do not wait for our CALL_OWN if there is no subscription yet
+            var collect = calls.subscriptionCount.value == 0
+            Log.d(TAG, "onInitialized(${this@Plugin.hashCode()}), collecting calls")
+            calls.takeWhile { c ->
+                // As soon as a CALL_OWN is recorded with a higher pluginId, it means a new
+                // Plugin instance is initialized
+                !(c.method == PLUGIN_CALL_OWN && c.pluginId() > pluginId)
+            }.filter { c ->
+                // We collect only events after our CALL_OWN if there was already
+                // a plugin instance subscribed to calls
+                collect || (c.method == PLUGIN_CALL_OWN && c.pluginId() == pluginId).also {
+                    collect = it
+                }
+            }.filterNot {
+                it.method == PLUGIN_CALL_OWN
+            }.collect {
                 coroutineContext.ensureActive()
                 Log.d(TAG, "Calling ${it.method}")
                 mainHandler.post {
                     pluginChannel?.invokeMethod(it.method, it.data)
                 }
             }
+            Log.d(TAG, "onInitialized(${this@Plugin.hashCode()}), stop collecting calls")
+        }
+        CoroutineScope(dispatcher).launch {
+            calls.emit(
+                Call(
+                    PLUGIN_CALL_OWN,
+                    mapOf(PLUGIN_ARG_PLUGINID to pluginId)
+                )
+            )
+            coroutineContext.cancel()
         }
         result.success(true)
     }
@@ -192,8 +221,12 @@ class Plugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     }
 
     companion object {
-        private const val TAG = "Plugin"
-        var calls: MutableSharedFlow<Call>? = null
+        private const val TAG = "UnifiedPush.Plugin"
+        private val pluginCounter = AtomicInteger(0)
+        val count
+            get() = pluginCounter.get()
+        // Allow up to 20 calls during initialization
+        val calls: MutableSharedFlow<Call> = MutableSharedFlow<Call>(replay = 20)
         val dispatcher = Dispatchers.IO
     }
 }

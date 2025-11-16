@@ -1,10 +1,13 @@
 package org.unifiedpush.flutter.connector
 
+/** Called when a new plugin is init */
+const val PLUGIN_CALL_OWN = "own";
 const val PLUGIN_CALL_NEW_ENDPOINT = "onNewEndpoint";
 const val PLUGIN_CALL_MESSAGE = "onMessage";
 const val PLUGIN_CALL_REGISTRATION_FAILED = "onRegistrationFailed";
 const val PLUGIN_CALL_UNREGISTERED = "onUnregistered";
 const val PLUGIN_CALL_TEMP_UNAVAILABLE = "onTempUnavailable";
+const val PLUGIN_ARG_PLUGINID = "pluginId"
 const val PLUGIN_ARG_INSTANCE = "instance";
 const val PLUGIN_ARG_ENDPOINT_URL = "endpoint.url";
 const val PLUGIN_ARG_ENDPOINT_KEY_PUBKEY = "endpoint.keyset.pubkey";

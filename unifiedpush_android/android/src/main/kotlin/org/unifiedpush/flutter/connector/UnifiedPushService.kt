@@ -36,7 +36,8 @@ open class UnifiedPushService: PushService() {
 
     override fun onCreate() {
         Log.d(TAG, "Starting UnifiedPushService")
-        Plugin.calls ?: run {
+        if (Plugin.count == 0) {
+            Log.d(TAG, "Registering new plugin")
             val registry = getEngine(this).plugins
             (registry.get(Plugin::class.java) as? Plugin)
                 ?: Plugin().also { registry.add(it) }
@@ -72,7 +73,7 @@ open class UnifiedPushService: PushService() {
             PLUGIN_ARG_MESSAGE_DECRYPTED to message.decrypted,
         )
         CoroutineScope(dispatcher).launch {
-            Plugin.calls?.emit(Call(PLUGIN_CALL_MESSAGE, data))
+            Plugin.calls.emit(Call(PLUGIN_CALL_MESSAGE, data))
             coroutineContext.cancel()
         }
     }
@@ -87,7 +88,7 @@ open class UnifiedPushService: PushService() {
             PLUGIN_ARG_ENDPOINT_TEMP to endpoint.temporary
         )
         CoroutineScope(dispatcher).launch {
-            Plugin.calls?.emit(Call(PLUGIN_CALL_NEW_ENDPOINT, data))
+            Plugin.calls.emit(Call(PLUGIN_CALL_NEW_ENDPOINT, data))
             coroutineContext.cancel()
         }
     }
@@ -99,7 +100,7 @@ open class UnifiedPushService: PushService() {
             PLUGIN_ARG_REASON to reason.name
         )
         CoroutineScope(dispatcher).launch {
-            Plugin.calls?.emit(Call(PLUGIN_CALL_REGISTRATION_FAILED, data))
+            Plugin.calls.emit(Call(PLUGIN_CALL_REGISTRATION_FAILED, data))
             coroutineContext.cancel()
         }
     }
@@ -108,7 +109,7 @@ open class UnifiedPushService: PushService() {
         Log.d(TAG, "onUnregistered")
         val data = mapOf(PLUGIN_ARG_INSTANCE to instance)
         CoroutineScope(dispatcher).launch {
-            Plugin.calls?.emit(Call(PLUGIN_CALL_UNREGISTERED, data))
+            Plugin.calls.emit(Call(PLUGIN_CALL_UNREGISTERED, data))
             coroutineContext.cancel()
         }
     }
@@ -117,7 +118,7 @@ open class UnifiedPushService: PushService() {
         Log.d(TAG, "onTempUnavailable")
         val data = mapOf(PLUGIN_ARG_INSTANCE to instance)
         CoroutineScope(dispatcher).launch {
-            Plugin.calls?.emit(Call(PLUGIN_CALL_TEMP_UNAVAILABLE, data))
+            Plugin.calls.emit(Call(PLUGIN_CALL_TEMP_UNAVAILABLE, data))
             coroutineContext.cancel()
         }
     }
