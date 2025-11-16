@@ -1,3 +1,6 @@
+## 3.4.1
+* Fix event reception when plugins are reinitialized
+
 ## 3.4.0
 * Use new platform interface
 
