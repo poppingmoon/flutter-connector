@@ -6,7 +6,7 @@
          FlutterApplication and put your custom class here. -->
     <application
         android:name="${applicationName}"
-        android:label="Unified Push Flutter Example"
+        android:label="UnifiedPush Flutter Example"
         android:icon="@mipmap/ic_launcher">
         <activity
             android:name=".MainActivity"

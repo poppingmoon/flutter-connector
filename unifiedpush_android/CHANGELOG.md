@@ -1,3 +1,18 @@
+## 3.4.1
+* Fix event reception when plugins are reinitialized
+
+## 3.4.0
+* Use new platform interface
+
+## 3.3.1
+* Fix: Token duplication on re-registrations
+* Fix: Do not rotate keys on re-registrations
+* Add `--unifiedpush-bg` argument to dart entrypoint
+* Since 3.1.1:
+    * Follow AND_3.1.0 specifications, with migration and temp unavailibility
+    * Compile with SDK 36
+    * Bump lowest supported kotlin version to 2.0
+
 ## 3.1.1
 * Fix events with updated Plugin
 * Bump android-connector to 3.0.10:

@@ -1,0 +1,34 @@
+when:
+    - branch: main
+      event: [push]
+      path: '.woodpecker/linux_pkg.yml'
+
+steps:
+    - name: Init
+      # Fork of https://github.com/MobileDevOps/flutter-sdk-image
+      image: codeberg.org/s1m/flutter-sdk-image:latest
+      pull: true
+      commands:
+        - git config --global --add safe.directory /home/mobiledevops/.flutter-sdk
+        - ./dev.sh
+        - for k in unifiedpush* example; do cd $k; flutter pub get; cd ..; done
+    - name: Build Linux
+      image: codeberg.org/s1m/flutter-sdk-image:latest
+      commands:
+        - cd example
+        - flutter build linux
+        - cd build/linux/x64/release/bundle
+        - zip -r flutter-example-linux.zip .
+        - cd ../../../../../..
+        - mv ./example/build/linux/x64/release/bundle/flutter-example-linux.zip .
+    - name: Upload
+      image: codeberg.org/s1m/woodpecker-upload:latest
+      settings:
+          token:
+              from_secret: codeberg_token
+          file:
+              - flutter-example-linux.zip
+          package: true
+          # Update this version to publish a new package
+          # v<unifiedpush version>+<unifiedpush_linux version>+<revision>
+          version: v6.2.0+1.0.0+1

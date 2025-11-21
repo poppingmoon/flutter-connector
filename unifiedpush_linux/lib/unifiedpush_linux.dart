@@ -1,13 +1,20 @@
+import 'dart:io';
+
+import 'package:flutter/foundation.dart';
+import 'package:unifiedpush_linux/org.freedesktop.DBus.dart';
 import 'package:unifiedpush_linux/org.unifiedpush.Connector2.dart';
 
 import 'package:dbus/dbus.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:unifiedpush_linux/org.unifiedpush.Distributor2.dart';
 import 'package:unifiedpush_platform_interface/data/failed_reason.dart';
 import 'package:unifiedpush_platform_interface/data/push_endpoint.dart';
 import 'package:unifiedpush_platform_interface/data/push_message.dart';
 import 'package:unifiedpush_platform_interface/unifiedpush_platform_interface.dart';
+import 'package:unifiedpush_storage_interface/registrations_storage.dart';
+import 'package:unifiedpush_storage_interface/storage.dart';
 import 'package:uuid/v4.dart';
+import 'package:window_manager/window_manager.dart';
+import 'package:path/path.dart' as p;
 
 enum RegistrationFailure {
   internalError("INTERNAL_ERROR"),
@@ -17,8 +24,21 @@ enum RegistrationFailure {
   unauthorized("UNAUTHORIZED");
 
   final String value;
-
   const RegistrationFailure(this.value);
+
+  FailedReason toFailedReason() {
+    switch (this) {
+      case network:
+        return FailedReason.network;
+      case actionRequired:
+      case unauthorized:
+        return FailedReason.actionRequired;
+      case vapidRequired:
+        return FailedReason.vapidRequired;
+      default:
+        return FailedReason.internalError;
+    }
+  }
 }
 
 class UnifiedPushRegistrationFailed implements Exception {
@@ -28,13 +48,14 @@ class UnifiedPushRegistrationFailed implements Exception {
 }
 
 class UnifiedPushLinux extends UnifiedPushPlatform {
-  final DBusClient _dbusClient;
+  final DBusClient _dbusClient = DBusClient.session();
+
   OrgUnifiedpushDistributor2? _distributor;
   OrgUnifiedpushConnector2? _connector;
-  String? _instance;
   String? _dbusName;
-
-  UnifiedPushLinux() : _dbusClient = DBusClient.session();
+  UnifiedPushStorage? _storage;
+  bool _background = false;
+  void Function(FailedReason reason, String instance)? onRegistrationFailed;
 
   static void registerWith() {
     UnifiedPushPlatform.instance = UnifiedPushLinux();
@@ -49,14 +70,13 @@ class UnifiedPushLinux extends UnifiedPushPlatform {
 
   @override
   Future<String?> getDistributor() async {
-    var sharedPreferences = await SharedPreferences.getInstance();
-    return sharedPreferences.getString("selected_distributor");
+    return await _getStorage("getDistributor").distrib.get();
   }
 
   @override
   Future<void> saveDistributor(String distributor) async {
-    var sharedPreferences = await SharedPreferences.getInstance();
-    sharedPreferences.setString("selected_distributor", distributor);
+    _setDistributor(distributor);
+    await _getStorage("saveDistributor").distrib.set(distributor);
   }
 
   @override
@@ -66,35 +86,16 @@ class UnifiedPushLinux extends UnifiedPushPlatform {
     String? messageForDistributor,
     String? vapid,
   ) async {
-    assert(_dbusName != null,
-        "DBus name not set, setDBusName must be called before register");
+    var storage = _getStorage("register");
 
-    var distributor = await getDistributor();
-    if (distributor == null || _connector == null) return;
-
-    var sharedPreferences = await SharedPreferences.getInstance();
-    var token = sharedPreferences.getString("instance_${instance}_token");
+    var token = (await storage.registrations.getFromInstance(instance))?.token;
     if (token == null) {
       token = const UuidV4().generate();
-      sharedPreferences.setString("instance_${instance}_token", token);
+      await storage.registrations.save(TokenInstance(token, instance));
     }
-
-    _instance = instance;
-
-    _distributor = OrgUnifiedpushDistributor2(
-      _dbusClient,
-      distributor,
-      DBusObjectPath('/org/unifiedpush/Distributor'),
-    );
-
-    await _dbusClient.requestName(_dbusName!);
-    if (_connector!.client == null) {
-      await _dbusClient.registerObject(_connector!);
-    }
-
-    var result = await _distributor!.callRegister(
+    var result = await _distributor?.callRegister(
       {
-        "service": DBusString(instance),
+        "service": DBusString(_getDBusName()),
         "token": DBusString(token),
         if (messageForDistributor != null) ...{
           "description": DBusString(messageForDistributor),
@@ -103,38 +104,56 @@ class UnifiedPushLinux extends UnifiedPushPlatform {
           "vapid": DBusString(vapid),
         }
       },
-    );
+    ).catchError((e) {
+      debugPrint("Cannot register to service $e");
+      return <String, DBusValue>{};
+    });
 
-    var succeeded = result["success"]!.asString() == "REGISTRATION_SUCCEEDED";
+    var succeeded = result?["success"]?.asString() == "REGISTRATION_SUCCEEDED";
 
     if (!succeeded) {
-      throw UnifiedPushRegistrationFailed(
-          reason: RegistrationFailure.values.firstWhere(
-        (possibleReason) =>
-            possibleReason.value == result["reason"]!.asString(),
-      ));
+      debugPrint("Registration failed");
+      final reason = RegistrationFailure.values
+          .firstWhere(
+              (possibleReason) =>
+                  possibleReason.value == result?["reason"]?.asString(),
+              orElse: () => RegistrationFailure.internalError)
+          .toFailedReason();
+      onRegistrationFailed?.call(reason, instance);
     }
   }
 
   @override
   Future<bool> tryUseCurrentOrDefaultDistributor() async {
-    return (await getDistributor()) != null;
+    final current = await getDistributor();
+    if (current != null) return true;
+    final available = await getDistributors([]);
+    if (available.length == 1) {
+      saveDistributor(available.first);
+      return true;
+    }
+    return false;
   }
 
   @override
   Future<void> unregister(String instance) async {
     if (_distributor == null || _connector == null) return;
 
-    var sharedPreferences = await SharedPreferences.getInstance();
-    var token = sharedPreferences.getString("instance_${instance}_token");
-    assert(token != null, "You need to call register before unregistering");
-
+    var storage = _getStorage("unregister");
+    var token = (await storage.registrations.getFromInstance(instance))?.token;
+    if (token == null) return;
+    final regLeft = await storage.registrations.remove(instance);
     await _distributor!.callUnregister({
-      "token": DBusString(token!),
+      "token": DBusString(token),
+    }).catchError((e) {
+      debugPrint("Cannot unregister to service $e");
+      return <String, DBusValue>{};
     });
-    await _dbusClient.unregisterObject(_connector!);
-    _connector!.client = null;
-    _instance = null;
+
+    if (!regLeft) {
+      await storage.distrib.remove();
+      await _delDistributor();
+    }
   }
 
   @override
@@ -144,22 +163,113 @@ class UnifiedPushLinux extends UnifiedPushPlatform {
     void Function(String instance)? onUnregistered,
     void Function(PushMessage message, String instance)? onMessage,
   }) async {
-    _connector ??= OrgUnifiedpushConnector2();
+    final storage = _getStorage("initializeCallback");
+    final connector = _connector ??= OrgUnifiedpushConnector2(storage);
+    final distrib = await storage.distrib.get();
+    if (distrib != null) {
+      _setDistributor(distrib);
+    }
+    _writeDBusService();
+    return connector.initializeCallback(
+        onNewEndpoint: onNewEndpoint,
+        onUnregistered: onUnregistered,
+        onMessage: onMessage);
+  }
 
-    return _connector!.initializeCallback(
-      onNewEndpoint: (endpoint) => onNewEndpoint?.call(endpoint, _instance!),
-      onRegistrationFailed: (reason) =>
-          onRegistrationFailed?.call(reason, _instance!),
-      onUnregistered: (token) => onUnregistered?.call(_instance!),
-      onMessage: (message) => onMessage?.call(message, _instance!),
-    );
+  String _getDBusName() {
+    var dbusName = _dbusName;
+    assert(
+        dbusName != null, "setDBusName must be called before initialization");
+    return dbusName!;
+  }
+
+  _setDistributor(String distrib) async {
+    var connector = _connector;
+    assert(connector != null, "Initialization hasn't been called");
+    _distributor = OrgUnifiedpushDistributor2(_dbusClient, distrib);
+    if (connector!.client == null) {
+      await _dbusClient.registerObject(connector);
+      Set<DBusRequestNameFlag> flags;
+      if (_background) {
+        // If we are in the background, we allow being replaced by a foreground
+        // instance, but don't need to enqueued.
+        flags = {
+          DBusRequestNameFlag.allowReplacement,
+          DBusRequestNameFlag.doNotQueue
+        };
+      } else {
+        // If we are in the foreground, we may replace a background one
+        flags = {DBusRequestNameFlag.replaceExisting};
+      }
+      final reply = await _dbusClient.requestName(_getDBusName(), flags: flags);
+      debugPrint("RequestName reply: $reply");
+      // So we are in the background, and there is already one existing, we exit
+      if (reply == DBusRequestNameReply.exists) {
+        mayExit();
+      }
+      _dbusClient.nameLost.first.then((name) {
+        debugPrint("We no longer own $name");
+        mayExit();
+      });
+    }
+  }
+
+  _delDistributor() async {
+    var connector = _connector;
+    assert(connector != null, "Initialization hasn't been called");
+    await _dbusClient.unregisterObject(connector!);
+    await _dbusClient.releaseName(_getDBusName());
+    connector.client = null;
+    _distributor = null;
+  }
+
+  UnifiedPushStorage _getStorage(String function) {
+    var storage = _storage;
+    assert(storage != null, "Storage must be set before calling $function");
+    return storage!;
   }
 
   @override
-  void setDBusName(String? name) {
-    assert(name != null, "The DBus name should be set");
-    assert(name!.split(".").length >= 3,
+  Future<void> initializeOnTempUnavailable(
+      void Function(String instance)? onTempUnavailable) async {
+    // Do nothing for the moment.
+  }
+
+  @override
+  void setLinuxOptions(LinuxOptions options) {
+    if (options.background) {
+      WindowManager.instance.hide();
+    }
+    assert(options.dbusName.split(".").length >= 3,
         "The DBus name should be a fully-qualified name (e.g. com.example.App)");
-    _dbusName = name;
+    _dbusName = options.dbusName;
+    _storage = options.storage;
+    _background = options.background;
+  }
+
+  Future<void> _writeDBusService() async {
+    final homeDir = Platform.environment['HOME']!;
+    final localShareDir =
+        Directory(p.join(homeDir, '.local', 'share', 'dbus-1', 'services'));
+    if (!await localShareDir.exists()) {
+      await localShareDir.create(recursive: true);
+    }
+
+    final conf = File(p.join(localShareDir.path, "$_dbusName.service"));
+    final executablePath = Platform.resolvedExecutable;
+
+    final content = '''
+[D-BUS Service]
+Name=$_dbusName
+Exec=/bin/sh -c "FLUTTER_HEADLESS=1 $executablePath --unifiedpush-bg"
+''';
+    await conf.writeAsString(content);
+    OrgFreedesktopDBus(_dbusClient).reloadConfig().catchError((e) {
+      debugPrint("Cannot reload DBUS config: $e");
+    });
+  }
+
+  void mayExit() {
+    if (_background) exit(0);
   }
 }

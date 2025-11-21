@@ -4,6 +4,7 @@ import 'package:unifiedpush_platform_interface/data/failed_reason.dart';
 import 'package:unifiedpush_platform_interface/data/push_endpoint.dart';
 import 'package:unifiedpush_platform_interface/data/push_message.dart';
 import 'package:unifiedpush_platform_interface/unifiedpush_platform_interface.dart';
+import 'package:unifiedpush_storage_interface/storage.dart';
 
 import 'constants.dart';
 
@@ -49,16 +50,31 @@ class UnifiedPush {
   /// Returns `Future<true>` if a distributor is already registered,
   /// `Future<false>` else;
   ///
+  /// - [onNewEndpoint] Invoked when a new endpoint is to be used for sending push messages
+  /// - [onRegistrationFailed] Invoked when the registration is not possible, eg. no network,
+  ///   depending on the reason, you can try to register again directly.
+  /// - [onUnregistered] Invoked when this registration is unregistered by the distributor and
+  ///   won't receive push messages anymore
+  /// - [onMessage] Invoked when a new message is received
+  /// - [onTempUnavailable] Invoked when the distributor backend is temporary unavailable.
+  /// - [storage] **Required for Linux**: UnifiedPushStorage
+  /// - [linuxDBusName] **Required for Linux**: DBus name for the application, should be linked to your app, like `tld.yourdomain.YourApp.service`
+  ///
   /// You can ignore instances if you don't use them.
   static Future<bool> initialize({
     void Function(PushEndpoint endpoint, String instance)? onNewEndpoint,
     void Function(FailedReason reason, String instance)? onRegistrationFailed,
     void Function(String instance)? onUnregistered,
     void Function(PushMessage message, String instance)? onMessage,
-    String? linuxDBusName,
+    void Function(String instance)? onTempUnavailable,
+    LinuxOptions? linuxOptions,
   }) async {
     if (Platform.isLinux) {
-      UnifiedPushPlatform.instance.setDBusName(linuxDBusName);
+      // If no DBusName is set, we don't initialize UnifiedPush on Linux,
+      // so project supporting Linux won't crash when they upgrade to a version
+      // of flutter_connector with support for Linux by default
+      if (linuxOptions == null) return false;
+      UnifiedPushPlatform.instance.setLinuxOptions(linuxOptions);
     }
     await UnifiedPushPlatform.instance.initializeCallback(
         onNewEndpoint: (PushEndpoint e, String i) async =>
@@ -67,6 +83,8 @@ class UnifiedPush {
             onRegistrationFailed?.call(r, i),
         onUnregistered: (String i) async => onUnregistered?.call(i),
         onMessage: (PushMessage m, String i) async => onMessage?.call(m, i));
+    await UnifiedPushPlatform.instance.initializeOnTempUnavailable(
+        (String i) async => onTempUnavailable?.call(i));
     return await UnifiedPush.getDistributor() != null;
   }
 

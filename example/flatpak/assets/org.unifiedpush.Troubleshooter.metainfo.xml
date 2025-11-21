@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>org.unifiedpush.Troubleshooter</id>
+  
+  <name>UnifiedPush Troubleshooter</name>
+  <summary>Troubleshoot your UnifiedPush setup</summary>
+  <url type="homepage">https://unifiedpush.org</url>
+  <url type="bugtracker">https://codeberg.org/UnifiedPush/flutter-connector/issues</url>
+  
+  <metadata_license>CC-BY-SA-4.0</metadata_license>
+  <project_license>Apache-2.0</project_license>
+
+  <developer id ="org.unifiedpush">
+    <name>UnifiedPush</name>
+  </developer>
+  
+  <supports>
+    <control>pointing</control>
+    <control>keyboard</control>
+    <control>touch</control>
+  </supports>
+  
+  <description>
+    <p>
+      This application helps you troubleshoot your UnifiedPush setup. It allows you to list visible push services, try to connect to them and test it they can correctly forward you your notifications.
+    </p>
+    <p>
+      It is particularly useful to understand why an application using UnifiedPush doesn't receive push notification, and helps isolating the issue.
+    </p>
+    <p>
+      An UnifiedPush distributor, such as KUnifiedPush, must be installed.
+    </p>
+  </description>
+
+  <content_rating type="oars-1.1" />
+  <launchable type="desktop-id">org.unifiedpush.Troubleshooter.desktop</launchable>
+  <screenshots>
+    <screenshot type="default">
+      <image>https://codeberg.org/UnifiedPush/flutter-connector/raw/commit/76ca72775ecfae27b09b27501dc99151e12ed216/example/flatpak/assets/screenshot.png</image>
+      <caption>UnifiedPush Troubleshooter connected to KUnifiedPush. There are buttons to refresh the service list, to use the default service, to send a test, or to open a test webpage, following by some details regarding the registrations, like the number of push received.</caption>
+    </screenshot>
+  </screenshots>
+  <releases>
+    <release version="v6.2.0+1.0.0+1" date="2025-10-16">
+      <description>
+        <p>Initial Release</p>
+      </description>
+    </release>
+  </releases>
+</component>

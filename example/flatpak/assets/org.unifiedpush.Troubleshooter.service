@@ -1,0 +1,4 @@
+[D-BUS Service]
+Name=org.unifiedpush.Troubleshooter
+# the flutter command will be automatically updated to use flatpak org.unifiedpush.Troubleshooter
+Exec=sh -c "FLUTTER_HEADLESS=1 up_troubleshoot --unifiedpush-bg"

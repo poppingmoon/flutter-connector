@@ -1,32 +1,38 @@
-steps:
-    check:
-        # https://github.com/MobileDevOps/flutter-sdk-image
-        image: mobiledevops/flutter-sdk-image:latest
-        when:
-          branch: main
-          event: [push, pull_request, manual]
-        commands:
-          - git config --global --add safe.directory /home/mobiledevops/.flutter-sdk
-          - ./dev.sh
-          - cd ./unifiedpush_platform_interface
-          - flutter pub get
-          - cd ../unifiedpush
-          - flutter pub get
-          - cd ../unifiedpush_android
-          - flutter pub get
-          - cd ../example
-          - flutter build apk
-          - cd ..
-          - mv ./example/build/app/outputs/flutter-apk/app-release.apk flutter-example.apk
+when:
+    branch: main
+    event: [push, pull_request, manual]
 
-    upload:
-        image: codeberg.org/s1m/woodpecker-upload:latest
-        when:
-            branch: main
-            event: [push, pull_request, manual]
-        settings:
-            token:
-                from_secret: codeberg_token
-            file:
-                - flutter-example.apk
-            package: true
+steps:
+    - name: Init
+      # Fork of https://github.com/MobileDevOps/flutter-sdk-image
+      image: codeberg.org/s1m/flutter-sdk-image:latest
+      pull: true
+      commands:
+        - git config --global --add safe.directory /home/mobiledevops/.flutter-sdk
+        - ./dev.sh
+        - for k in unifiedpush* example; do cd $k; flutter pub get; cd ..; done
+    - name: Build Android
+      image: codeberg.org/s1m/flutter-sdk-image:latest
+      commands:
+        - cd example
+        - flutter build apk
+        - cd ..
+        - mv ./example/build/app/outputs/flutter-apk/app-release.apk flutter-example.apk
+    - name: Build Linux
+      image: codeberg.org/s1m/flutter-sdk-image:latest
+      commands:
+        - cd example
+        - flutter build linux
+        - cd build/linux/x64/release/bundle
+        - zip -r flutter-example-linux.zip .
+        - cd ../../../../../..
+        - mv ./example/build/linux/x64/release/bundle/flutter-example-linux.zip .
+    - name: Upload
+      image: codeberg.org/s1m/woodpecker-upload:latest
+      settings:
+          token:
+              from_secret: codeberg_token
+          file:
+              - flutter-example.apk
+              - flutter-example-linux.zip
+          package: true

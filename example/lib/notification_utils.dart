@@ -9,7 +9,7 @@ import 'main.dart';
 
 abstract class UPNotificationUtils {
   static final FlutterLocalNotificationsPlugin
-      _flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+  _flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
 
   static bool _notificationInitialized = false;
 
@@ -34,30 +34,46 @@ abstract class UPNotificationUtils {
     if (instance != localInstance) {
       return false;
     }
-    debugPrint("onNotification");
-    var payload = utf8.decode(message.content);
-
-    String title = 'UP-Example'; // Default title
-    String body = 'Could not get the content'; // Default body
-
+    String payload;
     try {
-      // Try to decode title and message (JSON)
-      Map<String, String> decodedMessage = decodeMessageContentsUri(payload);
-      title = decodedMessage['title'] ?? title;
-      body = decodedMessage['message'] ?? body;
+      payload = utf8.decode(message.content);
     } catch (e) {
-      // If decoding fails, use plain payload as body
-      body = payload.isNotEmpty ? payload : 'Empty message';
+      // We may have a FormatException while doing utf8.decode, if it was encrypted
+      // but we couldn't decrypt it.
+      debugPrint(
+        "Couldn't decrypt content (decrypted=${message.decrypted}): $e",
+      );
+      payload = "Couldn't decrypt";
     }
 
-    debugPrint(title);
-    if (!_notificationInitialized) _initNotifications();
+    String title = 'UnifiedPush Troubleshooter'; // Default title
+    String body = 'Could not get the content'; // Default body
+    if (payload == "org.unifiedpush.TEST_NOTIF") {
+      body = "Test notification received.";
+    } else {
+      try {
+        // Try to decode title and message (JSON)
+        Map<String, String> decodedMessage = decodeMessageContentsUri(payload);
+        title = decodedMessage['title'] ?? title;
+        body = decodedMessage['message'] ?? body;
+      } catch (e) {
+        // If decoding fails, use plain payload as body
+        body = payload.isNotEmpty ? payload : 'Empty message';
+      }
+    }
+
+    if (!_notificationInitialized) await _initNotifications();
 
     var androidPlatformChannelSpecifics = const AndroidNotificationDetails(
-        'UP-Example', 'UP-Example',
-        playSound: false, importance: Importance.max, priority: Priority.high);
-    var platformChannelSpecifics =
-        NotificationDetails(android: androidPlatformChannelSpecifics);
+      'UP-Example',
+      'UP-Example',
+      playSound: false,
+      importance: Importance.max,
+      priority: Priority.high,
+    );
+    var platformChannelSpecifics = NotificationDetails(
+      android: androidPlatformChannelSpecifics,
+    );
     await _flutterLocalNotificationsPlugin.show(
       DateTime.now().microsecondsSinceEpoch % 100000000,
       title,
@@ -68,20 +84,20 @@ abstract class UPNotificationUtils {
     return true;
   }
 
-  static void _initNotifications() async {
-    WidgetsFlutterBinding.ensureInitialized();
-
+  static FutureOr<void> _initNotifications() async {
     const AndroidInitializationSettings initializationSettingsAndroid =
         AndroidInitializationSettings('notification_icon');
     const LinuxInitializationSettings initializationSettingsLinux =
         LinuxInitializationSettings(defaultActionName: 'open');
     const InitializationSettings initializationSettings =
         InitializationSettings(
-      android: initializationSettingsAndroid,
-      linux: initializationSettingsLinux,
-    );
-    _notificationInitialized = await _flutterLocalNotificationsPlugin
-            .initialize(initializationSettings) ??
+          android: initializationSettingsAndroid,
+          linux: initializationSettingsLinux,
+        );
+    _notificationInitialized =
+        await _flutterLocalNotificationsPlugin.initialize(
+          initializationSettings,
+        ) ??
         false;
   }
 }

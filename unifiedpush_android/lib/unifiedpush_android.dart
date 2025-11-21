@@ -24,6 +24,7 @@ class UnifiedPushAndroid extends UnifiedPushPlatform {
   static void Function(String instance)? _onUnregistered = (String i) {};
   static void Function(PushMessage message, String instance)? _onMessage =
       (PushMessage m, String i) {};
+  static void Function(String instance)? _onTempUnavailable = (String i) {};
 
   /// Returns the qualified identifier of all available distributors on the system.
   @override
@@ -93,6 +94,17 @@ class UnifiedPushAndroid extends UnifiedPushPlatform {
     debugPrint("initializeCallback finished");
   }
 
+  /// Register optional callback for onTempUnavailable
+  /// This event is sent by the distributor if the push server is down
+  @override
+  Future<void> initializeOnTempUnavailable(
+    void Function(String instance)? onTempUnavailable,
+  ) {
+    _onTempUnavailable = onTempUnavailable;
+    return Future.value();
+  }
+
+
   static FailedReason failedReasonFromString(String r) {
     switch (r) {
     case "NETWORK":
@@ -117,7 +129,8 @@ class UnifiedPushAndroid extends UnifiedPushPlatform {
         if (pubKey != null && auth != null) {
           pubKeySet = PublicKeySet(pubKey, auth);
         }
-        _onNewEndpoint?.call(PushEndpoint(url, pubKeySet), instance);
+        final temp = call.arguments[pluginArgEndpointTemp] as bool;
+        _onNewEndpoint?.call(PushEndpoint(url, pubKeySet, temporary: temp), instance);
         break;
       case "onRegistrationFailed":
         final reason = failedReasonFromString(call.arguments[pluginArgReason]);
@@ -131,6 +144,14 @@ class UnifiedPushAndroid extends UnifiedPushPlatform {
         final decrypted = call.arguments[pluginArgMessageDecrypted] as bool;
         _onMessage?.call(PushMessage(content, decrypted), instance);
         break;
+      case "onTempUnavailable":
+        _onTempUnavailable?.call(instance);
+        break;
     }
+  }
+
+  @override
+  void setLinuxOptions(LinuxOptions options) {
+    // Not needed
   }
 }

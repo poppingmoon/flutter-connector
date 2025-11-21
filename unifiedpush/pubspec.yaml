@@ -1,6 +1,6 @@
 name: unifiedpush
 description: Push notifications with the provider chosen by the user.
-version: 6.0.2
+version: 6.2.0
 homepage: "https://unifiedpush.org/developers/flutter"
 documentation: "https://unifiedpush.org/developers/flutter"
 repository: https://codeberg.org/UnifiedPush/flutter-connector
@@ -13,8 +13,10 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  unifiedpush_platform_interface: ^3.0.0
-  unifiedpush_android: ^3.1.0
+  unifiedpush_platform_interface: ^4.0.0
+  unifiedpush_storage_interface: ^1.0.0
+  unifiedpush_android: ^3.4.0
+  unifiedpush_linux: ^1.0.0
 
 dev_dependencies:
   flutter_test:
@@ -35,3 +37,5 @@ flutter:
 #todev#    path: ../unifiedpush_android
 #todev#  unifiedpush_linux:
 #todev#    path: ../unifiedpush_linux
+#todev#  unifiedpush_storage_interface:
+#todev#    path: ../unifiedpush_storage_interface

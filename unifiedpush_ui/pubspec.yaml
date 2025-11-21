@@ -1,6 +1,6 @@
 name: unifiedpush_ui
 description: UnifiedPush Dialogs
-version: 0.1.0
+version: 0.2.0
 homepage: "https://unifiedpush.org/developers/flutter"
 documentation: "https://unifiedpush.org/developers/flutter"
 repository: https://codeberg.org/UnifiedPush/flutter-connector/src/branch/main/unifiedpush_ui
@@ -12,7 +12,6 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  shared_preferences: ^2.0.11
 
 dev_dependencies:
   dependency_validator: ^4.0.0 # Keep 4+ to avoid increasing min SDK.
