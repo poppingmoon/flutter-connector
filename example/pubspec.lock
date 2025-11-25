@@ -594,7 +594,7 @@ packages:
       path: "../unifiedpush_android"
       relative: true
     source: path
-    version: "3.4.0"
+    version: "3.4.1"
   unifiedpush_linux:
     dependency: "direct main"
     description:
