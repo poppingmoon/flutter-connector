@@ -16,7 +16,7 @@ plugins {
 
 configure<LibraryExtension> {
     namespace = "org.unifiedpush.flutter.connector"
-    compileSdk = 37
+    compileSdk = 36
 
     compileOptions{
         sourceCompatibility = JavaVersion.VERSION_1_8
