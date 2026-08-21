@@ -17,9 +17,16 @@ pluginManagement {
 }
 
 plugins {
+    id("com.android.application") version "9.3.1" apply false
     id("dev.flutter.flutter-plugin-loader") version "1.0.0"
-    id("com.android.application") version "8.13.0" apply false
-    id("org.jetbrains.kotlin.android") version "2.2.10" apply false
+}
+
+buildscript {
+    dependencies {
+        // Enforce higher KGP version for flutter (require 2.2.20+)
+        // cf. https://developer.android.com/build/releases/agp-9-0-0-release-notes#android-gradle-plugin-built-in-kotlin
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:2.3.20")
+    }
 }
 
 include(":app")
