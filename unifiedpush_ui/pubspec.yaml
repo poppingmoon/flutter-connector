@@ -6,13 +6,13 @@ documentation: "https://unifiedpush.org/developers/flutter"
 repository: https://codeberg.org/UnifiedPush/flutter-connector/src/branch/main/unifiedpush_ui
 
 environment:
-  sdk: ">=3.0.0 <4.0.0"
-  flutter: ">=3.10.0"
+  sdk: ">=3.13.0 <4.0.0"
+  flutter: ">=3.47.0"
 
 dependencies:
   flutter:
     sdk: flutter
-
+  material_ui: ^1.0.1
 dev_dependencies:
   dependency_validator: ^4.0.0 # Keep 4+ to avoid increasing min SDK.
   flutter_test:
