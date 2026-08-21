@@ -1,3 +1,4 @@
+import com.android.build.api.dsl.LibraryExtension
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 
@@ -11,29 +12,29 @@ allprojects {
 
 plugins {
     id("com.android.library")
-    id("org.jetbrains.kotlin.android")
 }
 
-android {
+configure<LibraryExtension> {
     namespace = "org.unifiedpush.flutter.connector"
-    compileSdk = 36
+    compileSdk = 37
 
     compileOptions{
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
     }
-    kotlin {
-        compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_1_8)
-            // languageVersion provides source compatibility with the specified version of Kotlin
-            // By default it uses $kotlinVersion (2.2)
-            // We set it to the lowest non-deprecated value
-            languageVersion.set(KotlinVersion.KOTLIN_2_0)
-        }
-    }
 
     defaultConfig {
         minSdk = 16
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_1_8)
+        // languageVersion provides source compatibility with the specified version of Kotlin
+        // By default it uses $kotlinVersion (2.2)
+        // We set it to the lowest non-deprecated value
+        languageVersion.set(KotlinVersion.KOTLIN_2_0)
     }
 }
 
