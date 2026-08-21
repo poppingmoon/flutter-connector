@@ -30,6 +30,12 @@ configure<ApplicationExtension> {
             signingConfig = signingConfigs.getByName("debug")
         }
     }
+    // Fix bug
+    // Unexpected failure during lint analysis of UrlLauncher.java
+    // (this is a bug in lint or one of the libraries it depends on)
+    lint {
+        checkReleaseBuilds = false
+    }
 }
 
 flutter {
