@@ -39,7 +39,7 @@ kotlin {
 }
 
 dependencies {
-    api("org.unifiedpush.android:connector:3.1.2")
+    api("org.unifiedpush.android:connector:3.3.4")
     // stick with 2.6.1 for now,
     // 2.7.x minSdk=19
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.1")
