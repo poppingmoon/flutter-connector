@@ -25,6 +25,10 @@ configure<LibraryExtension> {
 
     defaultConfig {
         minSdk = 16
+
+        aarMetadata {
+            minCompileSdk = minSdk
+        }
     }
 }
 
@@ -39,7 +43,7 @@ kotlin {
 }
 
 dependencies {
-    api("org.unifiedpush.android:connector:3.3.4")
+    api("org.unifiedpush.android:connector:3.3.5")
     // stick with 2.6.1 for now,
     // 2.7.x minSdk=19
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.1")
