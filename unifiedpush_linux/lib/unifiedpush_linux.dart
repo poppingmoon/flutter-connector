@@ -7,12 +7,14 @@ import 'package:unifiedpush_linux/org.unifiedpush.Connector2.dart';
 import 'package:dbus/dbus.dart';
 import 'package:unifiedpush_linux/org.unifiedpush.Distributor2.dart';
 import 'package:unifiedpush_platform_interface/data/failed_reason.dart';
+import 'package:unifiedpush_platform_interface/data/public_key_set.dart';
 import 'package:unifiedpush_platform_interface/data/push_endpoint.dart';
 import 'package:unifiedpush_platform_interface/data/push_message.dart';
 import 'package:unifiedpush_platform_interface/unifiedpush_platform_interface.dart';
 import 'package:unifiedpush_storage_interface/registrations_storage.dart';
 import 'package:unifiedpush_storage_interface/storage.dart';
 import 'package:uuid/v4.dart';
+import 'package:webpush_encryption/webpush_encryption.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:path/path.dart' as p;
 
@@ -245,6 +247,19 @@ class UnifiedPushLinux extends UnifiedPushPlatform {
     _dbusName = options.dbusName;
     _storage = options.storage;
     _background = options.background;
+  }
+
+  @override
+  Future<PublicKeySet?> getPublicKeySet(String instance) async {
+    final serializedKey = await _storage?.keys.get(instance);
+    if (serializedKey == null) {
+      return null;
+    }
+    final keySet = await WebPushKeySet.deserialize(serializedKey);
+    return PublicKeySet(
+      keySet.publicKey.p256dh.replaceAll("=", ""),
+      keySet.publicKey.auth.replaceAll("=", ""),
+    );
   }
 
   Future<void> _writeDBusService() async {

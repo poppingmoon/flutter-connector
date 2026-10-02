@@ -6,8 +6,8 @@ documentation: "https://unifiedpush.org/developers/flutter"
 repository: https://codeberg.org/UnifiedPush/flutter-connector/src/branch/main/unifiedpush_linux
 
 environment:
-  sdk: '>=3.0.0 <4.0.0'
-  flutter: '>=3.10.0'
+  sdk: ">=3.13.0 <4.0.0"
+  flutter: ">=3.10.0"
 
 dependencies:
   flutter:

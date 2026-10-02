@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:unifiedpush_platform_interface/data/failed_reason.dart';
+import 'package:unifiedpush_platform_interface/data/public_key_set.dart';
 import 'package:unifiedpush_platform_interface/data/push_endpoint.dart';
 import 'package:unifiedpush_platform_interface/data/push_message.dart';
 import 'package:unifiedpush_platform_interface/unifiedpush_platform_interface.dart';
@@ -145,5 +146,12 @@ class UnifiedPush {
   /// Save the distributor to be used.
   static Future<void> saveDistributor(String distributor) async {
     await UnifiedPushPlatform.instance.saveDistributor(distributor);
+  }
+
+  /// Returns the public keys for the instance.
+  static Future<PublicKeySet?> getPublicKeySet([
+    String instance = defaultInstance,
+  ]) async {
+    return await UnifiedPushPlatform.instance.getPublicKeySet(instance);
   }
 }

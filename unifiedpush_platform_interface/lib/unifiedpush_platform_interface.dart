@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 import 'package:unifiedpush_platform_interface/data/failed_reason.dart';
+import 'package:unifiedpush_platform_interface/data/public_key_set.dart';
 import 'package:unifiedpush_platform_interface/data/push_endpoint.dart';
 import 'package:unifiedpush_platform_interface/data/push_message.dart';
 import 'package:unifiedpush_storage_interface/storage.dart';
@@ -9,8 +10,10 @@ import 'package:unifiedpush_storage_interface/storage.dart';
 class LinuxOptions {
   /// FQN for DBus (e.g. com.example.App)
   final String dbusName;
+
   /// Implementation of UnifiedPushStorage
   final UnifiedPushStorage storage;
+
   /// If the application is in the background,
   /// then it will close itself when the DBUS name
   /// is replaced by another instance (which should be in the foreground).
@@ -84,6 +87,11 @@ abstract class UnifiedPushPlatform extends PlatformInterface {
   /// background.
   /// Required on Linux
   void setLinuxOptions(LinuxOptions options);
+
+  /// Returns the public keys for the instance.
+  Future<PublicKeySet?> getPublicKeySet(String instance) {
+    throw UnimplementedError("getPublicKeySet has not been implemented");
+  }
 }
 
 class DefaultUnifiedPush extends UnifiedPushPlatform {
@@ -136,5 +144,10 @@ class DefaultUnifiedPush extends UnifiedPushPlatform {
   Future<void> unregister(String instance) {
     throw UnimplementedError(
         "tryUseCurrentOrDefaultDistributor has not been implemented");
+  }
+
+  @override
+  Future<PublicKeySet?> getPublicKeySet(String instance) {
+    throw UnimplementedError("getPublicKeySet has not been implemented");
   }
 }

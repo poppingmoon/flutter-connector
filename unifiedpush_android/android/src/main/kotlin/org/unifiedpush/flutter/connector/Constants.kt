@@ -18,6 +18,7 @@ const val PLUGIN_ARG_MESSAGE_CONTENT = "message.content";
 const val PLUGIN_ARG_MESSAGE_DECRYPTED = "message.decrypted";
 const val PLUGIN_EVENT_GET_DISTRIBUTORS = "getDistributors"
 const val PLUGIN_EVENT_GET_DISTRIBUTOR = "getDistributor"
+const val PLUGIN_EVENT_GET_PUBLIC_KEY_SET = "getPublicKeySet"
 const val PLUGIN_EVENT_SAVE_DISTRIBUTOR = "saveDistributor"
 const val PLUGIN_EVENT_REGISTER_APP = "registerApp"
 const val PLUGIN_EVENT_TRY_CURRENT_OR_DEFAULT_DISTRIBUTOR = "tryUseCurrentOrDefaultDistributor";

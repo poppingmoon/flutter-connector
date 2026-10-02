@@ -58,6 +58,24 @@ class Plugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         result.success(up.getAckDistributor(context))
     }
 
+    private fun getPublicKeySet(context: Context,
+                            args: ArrayList<String>?,
+                            result: MethodChannel.Result) {
+        val instance = args?.get(0) ?: run {
+            result.success(null)
+            return
+        }
+        val pubKeySet = up.getPublicKeySet(context, instance) ?: run {
+            result.success(null)
+            return
+        }
+        val data = mapOf(
+            PLUGIN_ARG_ENDPOINT_KEY_PUBKEY to pubKeySet.pubKey,
+            PLUGIN_ARG_ENDPOINT_KEY_AUTH to pubKeySet.auth,
+        )
+        result.success(data)
+    }
+
     private fun saveDistributor(context: Context,
                                 args: ArrayList<String>?,
                                 result: MethodChannel.Result) {
@@ -211,6 +229,7 @@ class Plugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         when(call.method) {
             PLUGIN_EVENT_GET_DISTRIBUTORS -> getDistributors(mContext!!,result)
             PLUGIN_EVENT_GET_DISTRIBUTOR -> getDistributor(mContext!!, result)
+            PLUGIN_EVENT_GET_PUBLIC_KEY_SET -> getPublicKeySet(mContext!!, args, result)
             PLUGIN_EVENT_SAVE_DISTRIBUTOR -> saveDistributor(mContext!!, args, result)
             PLUGIN_EVENT_REGISTER_APP -> register(mContext!!, args, result)
             PLUGIN_EVENT_TRY_CURRENT_OR_DEFAULT_DISTRIBUTOR -> tryUseCurrentOrDefaultDistributor(result)

@@ -44,7 +44,7 @@ kotlin {
 }
 
 dependencies {
-    api("com.github.poppingmoon:android-connector:d8deb58367")
+    api("com.github.poppingmoon:android-connector:1e6836eef6")
     // stick with 2.6.1 for now,
     // 2.7.x minSdk=19
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.1")

@@ -13,6 +13,7 @@ const pluginArgMessageContent = "message.content";
 const pluginArgMessageDecrypted = "message.decrypted";
 const pluginEventGetDistributors = "getDistributors";
 const pluginEventGetDistributor = "getDistributor";
+const pluginEventGetPublicKeySet = "getPublicKeySet";
 const pluginEventSaveDistributor = "saveDistributor";
 const pluginEventRegisterApplication = "registerApp";
 const pluginEventTryCurrentOrDefaultDistributor = "tryUseCurrentOrDefaultDistributor";

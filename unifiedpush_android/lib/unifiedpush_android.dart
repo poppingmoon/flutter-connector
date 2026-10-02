@@ -154,4 +154,20 @@ class UnifiedPushAndroid extends UnifiedPushPlatform {
   void setLinuxOptions(LinuxOptions options) {
     // Not needed
   }
+
+  /// Returns the public keys for the instance.
+  @override
+  Future<PublicKeySet?> getPublicKeySet(String instance) async {
+    final result =
+        await _channel.invokeMethod(pluginEventGetPublicKeySet, [instance]);
+    if (result
+        case {
+          pluginArgEndpointKeyPubKey: final String pubKey,
+          pluginArgEndpointKeyAuth: final String auth,
+        }) {
+      return PublicKeySet(pubKey, auth);
+    } else {
+      return null;
+    }
+  }
 }
