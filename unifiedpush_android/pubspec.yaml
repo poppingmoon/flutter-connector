@@ -1,5 +1,6 @@
 name: unifiedpush_android
 description: Android implementation of UnifiedPush plugin.
+publish_to: none
 version: 3.4.1
 homepage: "https://unifiedpush.org/developers/flutter"
 documentation: "https://unifiedpush.org/developers/flutter"
@@ -12,7 +13,11 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  unifiedpush_platform_interface: ^4.0.0
+  unifiedpush_platform_interface:
+    git:
+      url: https://github.com/poppingmoon/flutter-connector
+      ref: aria
+      path: unifiedpush_platform_interface
 
 dev_dependencies:
   flutter_test:

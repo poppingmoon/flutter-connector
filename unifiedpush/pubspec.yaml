@@ -1,5 +1,6 @@
 name: unifiedpush
 description: Push notifications with the provider chosen by the user.
+publish_to: none
 version: 6.2.0
 homepage: "https://unifiedpush.org/developers/flutter"
 documentation: "https://unifiedpush.org/developers/flutter"
@@ -13,10 +14,22 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  unifiedpush_platform_interface: ^4.0.0
+  unifiedpush_android:
+    git:
+      url: https://github.com/poppingmoon/flutter-connector
+      ref: aria
+      path: unifiedpush_android
+  unifiedpush_linux:
+    git:
+      url: https://github.com/poppingmoon/flutter-connector
+      ref: aria
+      path: unifiedpush_linux
+  unifiedpush_platform_interface:
+    git:
+      url: https://github.com/poppingmoon/flutter-connector
+      ref: aria
+      path: unifiedpush_platform_interface
   unifiedpush_storage_interface: ^1.0.0
-  unifiedpush_android: ^3.4.0
-  unifiedpush_linux: ^1.0.0
 
 dev_dependencies:
   flutter_test:

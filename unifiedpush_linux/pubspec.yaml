@@ -1,5 +1,6 @@
 name: unifiedpush_linux
 description: Linux implementation of UnifiedPush plugin.
+publish_to: none
 version: 1.0.1
 homepage: "https://unifiedpush.org/developers/flutter"
 documentation: "https://unifiedpush.org/developers/flutter"
@@ -12,7 +13,11 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  unifiedpush_platform_interface: ^4.0.0
+  unifiedpush_platform_interface:
+    git:
+      url: https://github.com/poppingmoon/flutter-connector
+      ref: aria
+      path: unifiedpush_platform_interface
   unifiedpush_storage_interface: ^1.0.0
   dbus: ^0.7.11
   uuid: ^4.2.2
