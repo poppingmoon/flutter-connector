@@ -89,9 +89,7 @@ abstract class UnifiedPushPlatform extends PlatformInterface {
   void setLinuxOptions(LinuxOptions options);
 
   /// Returns the public keys for the instance.
-  Future<PublicKeySet?> getPublicKeySet(String instance) {
-    throw UnimplementedError("getPublicKeySet has not been implemented");
-  }
+  Future<PublicKeySet?> getPublicKeySet(String instance);
 }
 
 class DefaultUnifiedPush extends UnifiedPushPlatform {
